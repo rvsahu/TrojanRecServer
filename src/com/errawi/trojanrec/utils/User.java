@@ -1,9 +1,6 @@
 package com.errawi.trojanrec.utils;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
-public class User implements Parcelable {
+public class User {
     /**
      * The name of the user, first name followed by last name (separated with a space).
      */
@@ -73,13 +70,5 @@ public class User implements Parcelable {
     public boolean login(String username, String password) {
         //do server stuff
         return false;
-    }
-
-    @Override public int describeContents() {
-        return 0;
-    }
-
-    @Override public void writeToParcel(Parcel dest, int flags) {
-
     }
 }
