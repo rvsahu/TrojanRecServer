@@ -2,7 +2,6 @@ package com.errawi.trojanrec.server;
 
 import com.errawi.trojanrec.utils.User;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class DatabaseTest {
