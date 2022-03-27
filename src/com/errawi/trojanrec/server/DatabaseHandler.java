@@ -7,6 +7,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Logger;
+import java.text.SimpleDateFormat;
 
 
 
@@ -96,6 +97,53 @@ public class DatabaseHandler {
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT name, student_id, image_path " +
                             "FROM trojanrec.userinfo WHERE net_id = '" + net_id + "'");
+            ResultSet rs = pst.executeQuery();
+
+            // Use setters defined in User class
+            if(rs.next()){
+                user.setName(rs.getString(1));
+                user.setStudentID(rs.getLong(2));
+                user.setUserPhoto(rs.getString(3));
+            }
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
+        return user;
+    }
+
+
+    /**
+     *
+     * @param user_id  The user's id, assigned as primary key in SQL db.
+     * @return     User object with the name, student ID, and user photo path set
+     *
+     */
+    public User retrieveUserById(int user_id){
+
+        User user = new User();
+        try {
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement
+                    ("SELECT name, student_id, image_path " +
+                            "FROM trojanrec.userinfo WHERE user_id = '" + user_id + "'");
             ResultSet rs = pst.executeQuery();
 
             // Use setters defined in User class
@@ -290,7 +338,51 @@ public class DatabaseHandler {
      *
      */
     public void makeBooking(int center_id, String timedate, User user) {
+        try {
+            conn = datasource.getConnection();
 
+            PreparedStatement pst = conn.prepareStatement
+                    ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
+                            + center_id + "' AND reservation_time = '" + timedate + "'");
+
+            ResultSet rs = pst.executeQuery();
+
+            PreparedStatement pst_k;
+            ResultSet rs_k;
+            Statement stmt;
+
+            if(rs.next()){
+                int timeslot_id = rs.getInt("timeslot_id");
+                pst_k = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
+                        "name = '" + user.getName() + "'");
+                rs_k = pst_k.executeQuery();
+                if(rs_k.next()){
+                    String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) VALUES " +
+                            "('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
+                    stmt = conn.createStatement();
+                    stmt.executeUpdate(sql);
+                }
+            }
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
     }
 
 
@@ -300,8 +392,59 @@ public class DatabaseHandler {
      * @return bookings  List of bookings
      *
      */
-    public ArrayList<String> getCurrentBookings(User user) {
+    public ArrayList<String> getFutureBookings(User user) {
         ArrayList<String> bookings = new ArrayList<>();
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String date_now = formatter.format(new Date(System.currentTimeMillis()));
+
+        try{
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
+                    "name = '" + user.getName() + "'");
+            ResultSet rs = pst.executeQuery();
+
+            if(rs.next()){
+                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id FROM trojanrec.booking " +
+                        "WHERE user_id = '" + rs.getInt("user_id") + "'");
+                ResultSet rs_k = pst_k.executeQuery();
+
+                while(rs_k.next()){
+
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time FROM " +
+                            "trojanrec.timeslot WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
+                    ResultSet rs_j = pst_j.executeQuery();
+
+                    while(rs_j.next()){
+                        int compare = date_now.compareTo(rs_j.getString("reservation_time"));
+                        // if current datetime is less than to a booking time, booking is in future
+                        if(compare < 0){
+                            bookings.add(rs_j.getString("reservation_time"));
+                        }
+                    }
+                }
+            }
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
         return bookings;
     }
 
@@ -312,8 +455,59 @@ public class DatabaseHandler {
      * @return bookings  List of bookings
      *
      */
-    public ArrayList<String> getAllBookings(User user) {
+    public ArrayList<String> getPastBookings(User user) {
         ArrayList<String> bookings = new ArrayList<>();
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String date_now = formatter.format(new Date(System.currentTimeMillis()));
+
+        try{
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
+                    "name = '" + user.getName() + "'");
+            ResultSet rs = pst.executeQuery();
+
+            if(rs.next()){
+                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id FROM trojanrec.booking " +
+                        "WHERE user_id = '" + rs.getInt("user_id") + "'");
+                ResultSet rs_k = pst_k.executeQuery();
+
+                while(rs_k.next()){
+
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time FROM " +
+                            "trojanrec.timeslot WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
+                    ResultSet rs_j = pst_j.executeQuery();
+
+                    while(rs_j.next()){
+                        int compare = date_now.compareTo(rs_j.getString("reservation_time"));
+                        // if current datetime is greater than or equal to a booking time, booking is in past
+                        if(compare >= 0){
+                            bookings.add(rs_j.getString("reservation_time"));
+                        }
+                    }
+                }
+            }
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
         return bookings;
     }
 
@@ -329,8 +523,12 @@ public class DatabaseHandler {
      *
      */
     public ArrayList<User> getWaitlist(int center_id, String timedate) {
+        ArrayList<Integer> user_ids = new ArrayList<>();
         ArrayList<User> users = new ArrayList<>();
         User fetch;
+
+        PreparedStatement pst_j;
+        ResultSet rs_j;
 
         try {
             conn = datasource.getConnection();
@@ -340,30 +538,26 @@ public class DatabaseHandler {
                             + center_id + "' AND reservation_time = '" + timedate + "'");
             ResultSet rs = pst.executeQuery();
 
-            PreparedStatement pst_j, pst_k;
-            ResultSet rs_j, rs_k;
             if(rs.next()){
-                pst_j = conn.prepareStatement("SELECT * FROM trojanrec.waitlist WHERE " +
-                        "timeslot_id = '" + rs.getString("timeslot_id") + "'");
+                pst_j = conn.prepareStatement("SELECT user_id FROM trojanrec.waitlist WHERE " +
+                        "timeslot_id = '" + rs.getInt("timeslot_id") + "'");
                 rs_j = pst_j.executeQuery();
 
                 // find all users in waitlist for that reservation
                 while(rs_j.next()){
-                    pst_k = conn.prepareStatement("SELECT net_id FROM trojanrec.userinfo " +
-                            "WHERE user_id = '" + rs_j.getString("user_id") + "'");
-                    rs_k = pst_k.executeQuery();
-
-                    // create user object for found user and add to list
-                    if(rs_k.next()){
-                        fetch = retrieveUser(rs_k.getString("net_id"));
-                        users.add(fetch);
-                    }
+                    user_ids.add(rs_j.getInt("user_id"));
                 }
+            }
+
+            for(int i=0; i < user_ids.size(); i++){
+               int id = user_ids.get(i);
+               fetch = retrieveUserById(id);
+               users.add(fetch);
+
             }
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
-            log.info("here 1");
             e.printStackTrace();
         }
         finally {
@@ -380,7 +574,6 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
-                log.info("here 2");
                 e.printStackTrace();
             }
         }
@@ -433,16 +626,5 @@ public class DatabaseHandler {
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
 
 }

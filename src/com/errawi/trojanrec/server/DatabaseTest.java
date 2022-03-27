@@ -8,11 +8,11 @@ public class DatabaseTest {
 
 
     public static void main(String[] args) {
-    	DatabaseHandler db = new DatabaseHandler();
+        DatabaseHandler db = new DatabaseHandler();
 
         /*
          *
-         * Testing DatabaseMain authenticateUser() method
+         * Testing DatabaseHandler authenticateUser() method
          * Returns boolean 'true' if net_id+password combination exists
          *
          */
@@ -47,7 +47,7 @@ public class DatabaseTest {
 
         /*
          *
-         * Testing DatabaseMain retrieveUser() method
+         * Testing DatabaseHandler retrieveUser() method
          * Returns populated User object
          *
          */
@@ -84,7 +84,7 @@ public class DatabaseTest {
 
         /*
          *
-         * Testing DatabaseMain getCenterTimeslots() method
+         * Testing DatabaseHandler getCenterTimeslots() method
          * Returns populated all center timeslots for specified gym
          *
          */
@@ -115,7 +115,7 @@ public class DatabaseTest {
 
         /* NOT DONE TESTING
          *
-         * Testing DatabaseMain isCapMax() method
+         * Testing DatabaseHandler isCapMax() method
          * Returns true if current reservation capacity and max capacity are the same
          *
          */
@@ -126,7 +126,7 @@ public class DatabaseTest {
         System.out.println("Capacity max (false): " + cap);
 
         /*
-         * Testing DatabaseMain clearWaitlist() method
+         * Testing DatabaseHandler clearWaitlist() method
          *  removes all reservations corresponding with a center+datetime
          */
         System.out.println("----TESTING REMOVING USERS FROM WAITLIST ----");
@@ -135,7 +135,7 @@ public class DatabaseTest {
         // perform a test
 
         /*
-         * Testing DatabaseMain addToWaitlist() method
+         * Testing DatabaseHandler addToWaitlist() method
          * Return value void, adds user to the waitlist
          *
          */
@@ -145,7 +145,7 @@ public class DatabaseTest {
         db.addToWaitlist(1, "2022-03-25 06:00:00", db.retrieveUser("karan"));
 
         /*
-         * Testing DatabaseMain getWaitlist() method
+         * Testing DatabaseHandler getWaitlist() method
          * Returns ArrayList of Users in the waitlist for given time/center
          *
          */
@@ -155,8 +155,47 @@ public class DatabaseTest {
         users_waiting = db.getWaitlist(1, "2022-03-25 06:00:00");
         for(int i=0; i<users_waiting.size(); i++){
             User w = users_waiting.get(i);
-            System.out.print(w.getName() + " " + w.getStudentID() + " " + w.getUserPhoto());
+            System.out.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto());
         }
+
+        /*
+         * Testing DatabaseHandler makeBooking() method
+         *
+         *
+         */
+
+        System.out.println("----TESTING ADDING USERS TO BOOKING TABLE ----");
+
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin"));
+        db.makeBooking(1, "2022-03-26 06:00:00", db.retrieveUser("erin"));
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
+
+
+
+        /*
+         * Testing DatabaseHandler getFutureBookings() method
+         *
+         *
+         */
+        User user_booking = new User();
+        ArrayList<String> bookings = new ArrayList<>();
+
+        //bookings = db.getFutureBookings(user_booking);
+
+        /*
+         * Testing DatabaseHandler getPastBookings() method
+         *
+         *
+         */
+        User user_bookingg = new User();
+        ArrayList<String> past_bookings = new ArrayList<>();
+        System.out.println("----TESTING PRINTING OUT PAST BOOKINGS ----");
+
+        user_bookingg = db.retrieveUser("erin");
+        past_bookings = db.getPastBookings(user_bookingg);
+        System.out.println(user_bookingg.getName());
+        System.out.println(past_bookings);
+
 
 
 
@@ -165,7 +204,7 @@ public class DatabaseTest {
 
 
         /* close pool after database calls are complete
-           do not make any database calls using DatabaseMain db after it is closed */
+           do not make any database calls using DatabaseHandler db after it is closed */
         db.datasource.close();
     }
 }
