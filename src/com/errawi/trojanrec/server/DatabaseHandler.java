@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 
 
-public class DatabaseMain {
+public class DatabaseHandler {
 
     String properties_file;
     HikariConfig config;
@@ -22,10 +22,10 @@ public class DatabaseMain {
     private static final Logger log;
     static {
         System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$-7s] %5$s %n");
-        log = Logger.getLogger(DatabaseMain.class.getName());
+        log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
-    public DatabaseMain() {
+    public DatabaseHandler() {
         properties_file = "db.properties";
         config = new HikariConfig(properties_file);
         datasource = new HikariDataSource(config);

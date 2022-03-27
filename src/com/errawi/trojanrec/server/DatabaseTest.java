@@ -8,7 +8,7 @@ public class DatabaseTest {
 
 
     public static void main(String[] args) {
-        DatabaseMain db = new DatabaseMain();
+    	DatabaseHandler db = new DatabaseHandler();
 
         /*
          *
