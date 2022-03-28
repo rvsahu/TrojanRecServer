@@ -1,10 +1,16 @@
 package com.errawi.trojanrec.utils;
 
 public class User {
-    /**
+	/**
      * The name of the user, first name followed by last name (separated with a space).
      */
     private String name;
+
+    /**
+     * User's USC net ID. This is what users initially use to log in, and this will be used
+     * for communicating with the server.
+     */
+    private String netID;
 
     /**
      * User's USC student ID. Needs to be a long as an int will not be able to store many
@@ -20,8 +26,9 @@ public class User {
 
     public User() {
         name = "";
-        userPhoto = "";
+        netID = "";
         studentID = -1;
+        userPhoto = "";
     }
 
     public void setName(String name) {
@@ -40,10 +47,26 @@ public class User {
         return this.studentID;
     }
 
+    public String getNetID() {
+        return this.netID;
+    }
+
+    public void setNetID(String netID) {
+        this.netID = netID;
+    }
+
+    /**
+     * Sets a URI to the user's photo.
+     * @param userPhoto  A URI to the user's photo.
+     */
     public void setUserPhoto(String userPhoto) {
         this.userPhoto = userPhoto;
     }
 
+    /**
+     * Returns a URI to the user's photo.
+     * @return     A URI to the user's photo.
+     */
     public String getUserPhoto() {
         return this.userPhoto;
     }
@@ -59,16 +82,5 @@ public class User {
             return false;
         }
         return true;
-    }
-
-    /**
-     *
-     * @param username  The user's username.
-     * @param password  The user's password.
-     * @return     True if the login worked, false otherwise.
-     */
-    public boolean login(String username, String password) {
-        //do server stuff
-        return false;
     }
 }
