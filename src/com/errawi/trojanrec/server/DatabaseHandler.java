@@ -626,5 +626,41 @@ public class DatabaseHandler {
             }
         }
     }
+    
+    
+    /**
+    *
+    * clears the entire bookings table - for testing suite purposes
+    *
+    */
+    public void clearBookingsTable() {
+        try {
+            conn = datasource.getConnection();
+            
+            String sql = "DELETE FROM trojanrec.booking";
+            Statement stmt = conn.createStatement();
+            stmt.executeUpdate(sql);
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
+    	
+    }
 
 }
