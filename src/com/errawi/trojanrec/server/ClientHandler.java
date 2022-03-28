@@ -16,7 +16,7 @@ public class ClientHandler extends Thread {
 	private ObjectOutputStream oos;
 	
 	/**
-	 * An input stream to read strings from the client
+	 * An input stream to read strings from the client.
 	 */
 	private BufferedReader br;
 	private DatabaseHandler databaseHandler;

@@ -32,10 +32,15 @@ public class TRServerMain  {
 			serverSocket = new ServerSocket(SOCKET_PORT); //if this works enter a perpetual loop
 			
 			while (true) {
-				ClientHandler newClientHandler = new ClientHandler(serverSocket.accept(), databaseHandler);
-				clientHandlers.add(newClientHandler);
-				clientExecutor.submit(newClientHandler);
-				connectedClients += 1;
+				try {
+					ClientHandler newClientHandler = new ClientHandler(serverSocket.accept(), databaseHandler);
+					clientHandlers.add(newClientHandler);
+					clientExecutor.submit(newClientHandler);
+					connectedClients += 1;
+				} catch (Exception e) {
+					//TODO: log the exception, printStackTrace() but to a file, etc.
+				}
+				
 			}
 			//shutdown executor and then wait until terminated
 			//clientExecutor.shutdown();
