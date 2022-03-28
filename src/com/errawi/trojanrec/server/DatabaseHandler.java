@@ -242,8 +242,10 @@ public class DatabaseHandler {
             int curr = -1;
 
             if(rs.next()){
-                max = rs.getInt(1);
-                curr = rs.getInt(2);
+                max = rs.getInt("cap_max");
+                System.out.println(max);
+                curr = rs.getInt("cap_curr");
+                System.out.println(curr);
             }
             if(max == curr){
                 return true;
@@ -347,21 +349,44 @@ public class DatabaseHandler {
 
             ResultSet rs = pst.executeQuery();
 
-            PreparedStatement pst_k;
-            ResultSet rs_k;
+            PreparedStatement pst_k, pst_j;
+            ResultSet rs_k, rs_j;
             Statement stmt;
 
             if(rs.next()){
                 int timeslot_id = rs.getInt("timeslot_id");
+                
+                // fetch user
                 pst_k = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
                         "name = '" + user.getName() + "'");
                 rs_k = pst_k.executeQuery();
-                if(rs_k.next()){
-                    String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) VALUES " +
-                            "('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
-                    stmt = conn.createStatement();
-                    stmt.executeUpdate(sql);
-                }
+                
+                
+
+                    if(rs_k.next()){
+                    	
+                    	int userID = rs_k.getInt("user_id");
+                    	
+                        // query - if user already has made booking at that center/timedate
+                        pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * FROM trojanrec.booking WHERE "
+                        		+ "timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
+                        rs_j = pst_j.executeQuery();
+                        int booking_made = 0;
+                        if(rs_j.next()) {
+                        	booking_made = rs_j.getInt(1);
+                        }
+                        
+                        // user doesn't have booking yet
+                        if(booking_made == 0) {                                                 
+                            String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) VALUES " +
+                                    "('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
+                            stmt = conn.createStatement();
+                            stmt.executeUpdate(sql);
+                        }
+                        else {
+                        	log.info("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
+                        }                  
+                    }             
             }
         }
         catch(SQLException e) {

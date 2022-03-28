@@ -66,9 +66,9 @@ public class DatabaseTest {
 
         // should not work
         user = db.retrieveUser("userdoesntexisttest");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 1]");
         user = db.retrieveUser("");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 2]");
 
         // should work
         user = db.retrieveUser("shreya");
@@ -113,26 +113,8 @@ public class DatabaseTest {
         result = "";
 
 
-        /* NOT DONE TESTING
-         *
-         * Testing DatabaseHandler isCapMax() method
-         * Returns true if current reservation capacity and max capacity are the same
-         *
-         */
-        boolean cap;
-        System.out.println("\n----TESTING CAPACITY MAX CHECK ----");
 
-        cap = db.isCapMax(1, "2022-03-25 06:00:00");
-        System.out.println("Capacity max (false): " + cap);
 
-        /*
-         * Testing DatabaseHandler clearWaitlist() method
-         *  removes all reservations corresponding with a center+datetime
-         */
-        System.out.println("\n----TESTING REMOVING USERS FROM WAITLIST ----");
-        db.clearWaitlist(1, "2022-03-25 06:00:00");
-
-        // perform a test
 
         /*
          * Testing DatabaseHandler addToWaitlist() method
@@ -143,6 +125,7 @@ public class DatabaseTest {
 
         db.addToWaitlist(1, "2022-03-25 06:00:00", db.retrieveUser("shreya"));
         db.addToWaitlist(1, "2022-03-25 06:00:00", db.retrieveUser("karan"));
+        db.addToWaitlist(1, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
 
         /*
          * Testing DatabaseHandler getWaitlist() method
@@ -150,13 +133,28 @@ public class DatabaseTest {
          *
          */
         ArrayList<User> users_waiting = new ArrayList<>();
-        System.out.println("\n----TESTING PRINTING OUT WAITLIST ----");
+        System.out.println("\nPRINTING OUT WAITLIST");
 
+        System.out.println("Printing users on waitlist for Lyon Center 2022-03-25 06:00:00");
         users_waiting = db.getWaitlist(1, "2022-03-25 06:00:00");
         for(int i=0; i<users_waiting.size(); i++){
             User w = users_waiting.get(i);
             System.out.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto());
         }
+        
+        /*
+         * Testing DatabaseHandler clearWaitlist() method
+         *  removes all reservations corresponding with a center+datetime
+         */
+        System.out.println("\n----TESTING REMOVING USERS FROM WAITLIST ----");
+        db.clearWaitlist(1, "2022-03-25 06:00:00");
+
+        // perform a test
+        
+        System.out.println("\nPRINTING OUT WAITLIST (should be empty)");
+        
+        
+        
 
         /*
          * 
@@ -167,10 +165,46 @@ public class DatabaseTest {
         db.clearBookingsTable();
         System.out.println("\n----TESTING ADDING USERS TO BOOKING TABLE ----");
 
+        // Lyon Center - 4 people max for this time slot
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin"));
-        db.makeBooking(1, "2022-03-26 06:00:00", db.retrieveUser("erin"));
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin")); // should return an error 
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("will"));
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea"));       
+        
+        // Village - 2 people max for this time slot
+        db.makeBooking(3, "2022-03-25 06:00:00", db.retrieveUser("erin"));
+        db.makeBooking(3, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
+       
+        db.makeBooking(1, "2022-03-26 06:00:00", db.retrieveUser("erin"));
+                
+        
 
+        /* NOT DONE TESTING
+        *
+        * Testing DatabaseHandler isCapMax() method
+        * Returns true if current reservation capacity and max capacity are the same
+        *
+        */
+       boolean cap;
+       System.out.println("\n----TESTING CAPACITY MAX CHECK ----");
+
+       // 4/4
+       cap = db.isCapMax(1, "2022-03-25 06:00:00");
+       System.out.println("Capacity max (true): " + cap);
+       
+       // 2/2
+       cap = db.isCapMax(3, "2022-03-25 06:00:00");
+       System.out.println("Capacity max (true): " + cap);
+       
+       // only one person signed up for this time slot (cap: 1/4)
+       cap = db.isCapMax(1, "2022-03-26 06:00:00");
+       System.out.println("Capacity max (false): " + cap);
+       
+       // no one is signed up for this time slot (cap: 0/2)
+       cap = db.isCapMax(3, "2022-03-26 06:00:00"); 
+       System.out.println("Capacity max (false): " + cap);
+       
 
 
         /*
@@ -183,6 +217,9 @@ public class DatabaseTest {
         ArrayList<String> bookings = new ArrayList<>();
 
         //bookings = db.getFutureBookings(user_booking);
+        
+        
+        
 
         /*
          * 
