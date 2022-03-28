@@ -9,31 +9,36 @@ import java.net.Socket;
 
 public class ClientHandler extends Thread {
 	private Socket socket;
+	
+	/**
+	 * An output stream to communicate objects to the client over.
+	 */
 	private ObjectOutputStream oos;
+	
+	/**
+	 * An input stream to read strings from the client.
+	 */
 	private BufferedReader br;
+	private DatabaseHandler databaseHandler;
 	
+	/**
+	 * The integer userId of the user that is logged into the (Android) TrojanRec
+	 * client that this thread is handling/communicating with. 
+	 */
+	private int userId;
 	
-	public ClientHandler(Socket socket) {
+	/**
+	 * 
+	 */
+	private boolean active;
+	
+	public ClientHandler(Socket socket, DatabaseHandler databaseHandler) {
 		this.socket = socket;
+		this.databaseHandler = databaseHandler;
 		try {
 			br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			oos = new ObjectOutputStream(socket.getOutputStream());
 		} catch (IOException ie) {
-			ie.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Sends an integer over oos representing the number of drivers needed before
-	 * delivery can start. When 0 is sent, the client starts listening for
-	 * DeliveryInformation objects
-	 * @param needed
-	 */
-	public void sendNeededDrivers(Integer needed) {
-		try {
-			oos.writeObject(needed);
-		} catch (IOException ie) {
-			System.err.println("Error sending needed driver count");
 			ie.printStackTrace();
 		}
 	}
@@ -44,7 +49,7 @@ public class ClientHandler extends Thread {
 	
 	public void run() {
 		while (true) {
-			//get available orders if any, wait until there are
+			//
 			try {
 				//DeliveryInformation info = oHandler.getReadyOrders();
 				//send orders to driver
@@ -62,10 +67,6 @@ public class ClientHandler extends Thread {
 				} else {
 					break;
 				}
-			} catch (IOException ie) {
-				System.err.println("IO error sending driver deliveries!");
-				ie.printStackTrace();
-				break;
 			} catch (Exception e) {
 				System.err.println("General error sending driver deliveries!");
 				e.printStackTrace();
