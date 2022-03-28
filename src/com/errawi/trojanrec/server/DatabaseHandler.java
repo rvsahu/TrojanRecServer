@@ -91,7 +91,7 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT name, student_id, image_path " +
+                    ("SELECT name, student_id, image_path, net_id " +
                             "FROM trojanrec.userinfo "
                             + "WHERE net_id = '" + net_id + "'");
             ResultSet rs = pst.executeQuery();
@@ -101,6 +101,7 @@ public class DatabaseHandler {
                 user.setName(rs.getString(1));
                 user.setStudentID(rs.getLong(2));
                 user.setUserPhoto(rs.getString(3));
+                user.setNetID(rs.getString(4));
             }
         }
         catch(SQLException e) {
@@ -139,7 +140,7 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT name, student_id, image_path " +
+                    ("SELECT name, student_id, image_path, net_id " +
                             "FROM trojanrec.userinfo "
                             + "WHERE user_id = '" + user_id + "'");
             ResultSet rs = pst.executeQuery();
@@ -149,6 +150,7 @@ public class DatabaseHandler {
                 user.setName(rs.getString(1));
                 user.setStudentID(rs.getLong(2));
                 user.setUserPhoto(rs.getString(3));
+                user.setNetID(rs.getString(4));
             }
         }
         catch(SQLException e) {

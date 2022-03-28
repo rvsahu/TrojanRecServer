@@ -59,31 +59,31 @@ public class DatabaseTest {
 
         // should work
         user = db.retrieveUser("erin");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("rahul");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("will");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("moshe");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
 
         // should not work
         user = db.retrieveUser("userdoesntexisttest");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 1]");
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID() +  "[empty test 1]");
         user = db.retrieveUser("");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 2]");
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID() + "[empty test 2]");
         user = db.retrieveUser(null);
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 3 - null]");
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID() + "[empty test 3 - null]");
         
         // should work
         user = db.retrieveUser("shreya");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("karan");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("khanh");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
         user = db.retrieveUser("avonlea");
-        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + ", " + user.getNetID());
 
         System.out.println("\n\n");
 
@@ -143,7 +143,7 @@ public class DatabaseTest {
         users_waiting = db.getWaitlist(1, "2022-03-25 06:00:00");
         for(int i=0; i<users_waiting.size(); i++){
             User w = users_waiting.get(i);
-            System.out.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto());
+            System.out.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto() + ", " + user.getNetID());
         }
         
         /*
@@ -222,7 +222,7 @@ public class DatabaseTest {
         *
         */     
        db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea"));
-       db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea")); //
+       db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea")); // should return an error, won't delete twice
        // check that capacity has gone down
        cap = db.isCapMax(1, "2022-03-25 06:00:00");
        System.out.println("Is capacity max (now false) for 2022-03-25 06:00:00: " + cap);
