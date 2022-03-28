@@ -47,8 +47,8 @@ public class DatabaseHandler {
             //log.info("Connected to the database");
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT * FROM trojanrec.userauth WHERE net_id = '"
-                            + net_id + "' AND password = '" + password + "'");
+                    ("SELECT * FROM trojanrec.userauth "
+                    		+ "WHERE net_id = '" + net_id + "' AND password = '" + password + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()) {
@@ -96,7 +96,8 @@ public class DatabaseHandler {
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT name, student_id, image_path " +
-                            "FROM trojanrec.userinfo WHERE net_id = '" + net_id + "'");
+                            "FROM trojanrec.userinfo "
+                            + "WHERE net_id = '" + net_id + "'");
             ResultSet rs = pst.executeQuery();
 
             // Use setters defined in User class
@@ -143,7 +144,8 @@ public class DatabaseHandler {
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT name, student_id, image_path " +
-                            "FROM trojanrec.userinfo WHERE user_id = '" + user_id + "'");
+                            "FROM trojanrec.userinfo "
+                            + "WHERE user_id = '" + user_id + "'");
             ResultSet rs = pst.executeQuery();
 
             // Use setters defined in User class
@@ -189,8 +191,10 @@ public class DatabaseHandler {
             //log.info("Connected to the database");
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT reservation_time FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' ORDER BY reservation_time");
+                    ("SELECT reservation_time "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id 
+                    		+ "' ORDER BY reservation_time");
             ResultSet rs = pst.executeQuery();
 
             // Use setters defined in User class
@@ -234,8 +238,9 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT cap_max, cap_curr FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' AND reservation_time = '" + timedate + "'");
+                    ("SELECT cap_max, cap_curr "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
             ResultSet rs = pst.executeQuery();
 
             int max = -1;
@@ -289,8 +294,9 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' AND reservation_time = '" + timedate + "'");
+                    ("SELECT timeslot_id "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
 
             ResultSet rs = pst.executeQuery();
 
@@ -300,12 +306,13 @@ public class DatabaseHandler {
 
             if(rs.next()){
                 int timeslot_id = rs.getInt("timeslot_id");
-                pst_k = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
-                        "name = '" + user.getName() + "'");
+                pst_k = conn.prepareStatement("SELECT user_id "
+                		+ "FROM trojanrec.userinfo "
+                		+ "WHERE name = '" + user.getName() + "'");
                 rs_k = pst_k.executeQuery();
                 if(rs_k.next()){
-                    String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) VALUES " +
-                                    "('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
+                    String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) "
+                    		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                     stmt = conn.createStatement();
                     stmt.executeUpdate(sql);
                 }
@@ -344,8 +351,8 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' AND reservation_time = '" + timedate + "'");
+                    ("SELECT timeslot_id FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
 
             ResultSet rs = pst.executeQuery();
 
@@ -359,8 +366,9 @@ public class DatabaseHandler {
                 timeslot_id = rs.getInt("timeslot_id");
                 
                 // fetch user
-                pst_k = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
-                        "name = '" + user.getName() + "'");
+                pst_k = conn.prepareStatement("SELECT user_id "
+                		+ "FROM trojanrec.userinfo "
+                		+ "WHERE name = '" + user.getName() + "'");
                 rs_k = pst_k.executeQuery();
                 
                 
@@ -370,8 +378,9 @@ public class DatabaseHandler {
                     	int userID = rs_k.getInt("user_id");
                     	
                         // query - if user already has made booking at that center/timedate
-                        pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * FROM trojanrec.booking WHERE "
-                        		+ "timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
+                        pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * "
+                        		+ "FROM trojanrec.booking "
+                        		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                         rs_j = pst_j.executeQuery();
                         int booking_made = 0;
                         if(rs_j.next()) {
@@ -380,13 +389,14 @@ public class DatabaseHandler {
                         
                         // user doesn't have booking yet
                         if(booking_made == 0) {                                                 
-                            String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) VALUES " +
-                                    "('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
+                            String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) "
+                            		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                             stmt = conn.createStatement();
                             stmt.executeUpdate(sql);
                             
-                            sql = "UPDATE trojanrec.timeslot SET cap_curr = cap_curr + 1 WHERE timeslot_id"
-                            		+ " = '" + timeslot_id + "'";
+                            sql = "UPDATE trojanrec.timeslot "
+                            		+ "SET cap_curr = cap_curr + 1 "
+                            		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                             stmt = conn.createStatement();
                             stmt.executeUpdate(sql);
                             
@@ -430,8 +440,9 @@ public class DatabaseHandler {
            conn = datasource.getConnection();
 
            PreparedStatement pst = conn.prepareStatement
-                   ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
-                           + center_id + "' AND reservation_time = '" + timedate + "'");
+                   ("SELECT timeslot_id "
+                   		+ "FROM trojanrec.timeslot "
+                   		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
 
            ResultSet rs = pst.executeQuery();
 
@@ -445,8 +456,9 @@ public class DatabaseHandler {
                timeslot_id = rs.getInt("timeslot_id");
                
                // fetch user
-               pst_k = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
-                       "name = '" + user.getName() + "'");
+               pst_k = conn.prepareStatement("SELECT user_id "
+               		+ "FROM trojanrec.userinfo "
+               		+ "WHERE name = '" + user.getName() + "'");
                rs_k = pst_k.executeQuery();
                
                
@@ -458,8 +470,9 @@ public class DatabaseHandler {
                        // query - make sure user does have booking at that center/timedate
                    	   // might be redundant because client-side likely won't show the option to 
                    	   // cancel a booking you haven't made, but keeping this in here for now just in case
-                       pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * FROM trojanrec.booking WHERE "
-                       		+ "timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
+                       pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * "
+                       		+ "FROM trojanrec.booking "
+                       		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                        rs_j = pst_j.executeQuery();
                        int booking_made = 0;
                        if(rs_j.next()) {
@@ -468,13 +481,14 @@ public class DatabaseHandler {
                        
                        // user has booking that can be deleted
                        if(booking_made != 0) {                                                 
-                           String sql = "DELETE FROM trojanrec.booking WHERE timeslot_id = '" + timeslot_id + "' AND "
-                           		+ "user_id = '" + userID + "'";
+                           String sql = "DELETE FROM trojanrec.booking "
+                           		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "'";
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);
                            
-                           sql = "UPDATE trojanrec.timeslot SET cap_curr = cap_curr - 1 WHERE timeslot_id"
-                           		+ " = '" + timeslot_id + "'";
+                           sql = "UPDATE trojanrec.timeslot "
+                           		+ "SET cap_curr = cap_curr - 1 "
+                           		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);
                            
@@ -523,19 +537,22 @@ public class DatabaseHandler {
         try{
             conn = datasource.getConnection();
 
-            PreparedStatement pst = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
-                    "name = '" + user.getName() + "'");
+            PreparedStatement pst = conn.prepareStatement("SELECT user_id "
+            		+ "FROM trojanrec.userinfo "
+            		+ "WHERE name = '" + user.getName() + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
-                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id FROM trojanrec.booking " +
+                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id "
+                		+ "FROM trojanrec.booking " +
                         "WHERE user_id = '" + rs.getInt("user_id") + "'");
                 ResultSet rs_k = pst_k.executeQuery();
 
                 while(rs_k.next()){
 
-                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time FROM " +
-                            "trojanrec.timeslot WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
                     ResultSet rs_j = pst_j.executeQuery();
 
                     while(rs_j.next()){
@@ -586,19 +603,22 @@ public class DatabaseHandler {
         try{
             conn = datasource.getConnection();
 
-            PreparedStatement pst = conn.prepareStatement("SELECT user_id FROM trojanrec.userinfo WHERE " +
-                    "name = '" + user.getName() + "'");
+            PreparedStatement pst = conn.prepareStatement("SELECT user_id "
+            		+ "FROM trojanrec.userinfo "
+            		+ "WHERE name = '" + user.getName() + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
-                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id FROM trojanrec.booking " +
+                PreparedStatement pst_k = conn.prepareStatement("SELECT timeslot_id "
+                		+ "FROM trojanrec.booking " +
                         "WHERE user_id = '" + rs.getInt("user_id") + "'");
                 ResultSet rs_k = pst_k.executeQuery();
 
                 while(rs_k.next()){
 
-                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time FROM " +
-                            "trojanrec.timeslot WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
                     ResultSet rs_j = pst_j.executeQuery();
 
                     while(rs_j.next()){
@@ -656,13 +676,15 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' AND reservation_time = '" + timedate + "'");
+                    ("SELECT timeslot_id "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
-                pst_j = conn.prepareStatement("SELECT user_id FROM trojanrec.waitlist WHERE " +
-                        "timeslot_id = '" + rs.getInt("timeslot_id") + "'");
+                pst_j = conn.prepareStatement("SELECT user_id "
+                		+ "FROM trojanrec.waitlist "
+                		+ "WHERE timeslot_id = '" + rs.getInt("timeslot_id") + "'");
                 rs_j = pst_j.executeQuery();
 
                 // find all users in waitlist for that reservation
@@ -716,14 +738,15 @@ public class DatabaseHandler {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
-                    ("SELECT timeslot_id FROM trojanrec.timeslot WHERE center_id = '"
-                            + center_id + "' AND reservation_time = '" + timedate + "'");
+                    ("SELECT timeslot_id "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
             ResultSet rs = pst.executeQuery();
 
             // delete all entires in waitlist for that timeslot_id
             if(rs.next()){
-                String sql = "DELETE FROM trojanrec.waitlist WHERE timeslot_id = '"
-                        + rs.getString("timeslot_id") + "'";
+                String sql = "DELETE FROM trojanrec.waitlist "
+                		+ "WHERE timeslot_id = '" + rs.getString("timeslot_id") + "'";
                 Statement stmt = conn.createStatement();
                 stmt.executeUpdate(sql);
             }
@@ -764,7 +787,8 @@ public class DatabaseHandler {
             Statement stmt = conn.createStatement();
             stmt.executeUpdate(sql);
             
-            sql = "UPDATE trojanrec.timeslot SET cap_curr = 0";
+            sql = "UPDATE trojanrec.timeslot "
+            		+ "SET cap_curr = 0";
             stmt = conn.createStatement();
             stmt.executeUpdate(sql);
         }
