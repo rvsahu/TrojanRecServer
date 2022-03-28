@@ -38,7 +38,7 @@ public class TRServerMain  {
 					clientExecutor.submit(newClientHandler);
 					connectedClients += 1;
 				} catch (Exception e) {
-					//TODO: log the exception, printStackTrace() but to a file, etc.
+					//TOO: log the exception, printStackTrace() but to a file, etc.
 				}
 				
 			}
@@ -50,9 +50,9 @@ public class TRServerMain  {
 			}
 			*/
 		} catch (SocketException se) {
-			//TODO: log the exception, printStackTrace() but to a file, etc.
+			//TOO: log the exception, printStackTrace() but to a file, etc.
 		} catch (IOException ie) {
-			//TODO: log the exception, printStackTrace() but to a file, etc.
+			//TOO: log the exception, printStackTrace() but to a file, etc.
 		}
 	}
 }
