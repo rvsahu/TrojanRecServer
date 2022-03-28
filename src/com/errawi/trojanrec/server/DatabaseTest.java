@@ -191,19 +191,32 @@ public class DatabaseTest {
 
        // 4/4
        cap = db.isCapMax(1, "2022-03-25 06:00:00");
-       System.out.println("Capacity max (true): " + cap);
+       System.out.println("Is capacity max (true) 2022-03-25 06:00:00: " + cap);
        
        // 2/2
        cap = db.isCapMax(3, "2022-03-25 06:00:00");
-       System.out.println("Capacity max (true): " + cap);
+       System.out.println("Is capacity max (true): " + cap);
        
        // only one person signed up for this time slot (cap: 1/4)
        cap = db.isCapMax(1, "2022-03-26 06:00:00");
-       System.out.println("Capacity max (false): " + cap);
+       System.out.println("Is capacity max (false): " + cap);
        
        // no one is signed up for this time slot (cap: 0/2)
        cap = db.isCapMax(3, "2022-03-26 06:00:00"); 
-       System.out.println("Capacity max (false): " + cap);
+       System.out.println("Is capacity max (false): " + cap);
+       
+       
+       
+       /*
+        * 
+        * Testing DatabaseHandler getFutureBookings() method
+        *
+        *
+        */     
+       db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea"));
+       // check that capacity has gone down
+       cap = db.isCapMax(1, "2022-03-25 06:00:00");
+       System.out.println("Is capacity max (now false) for 2022-03-25 06:00:00: " + cap);
        
 
 
