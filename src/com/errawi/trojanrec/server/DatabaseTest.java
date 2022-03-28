@@ -42,6 +42,9 @@ public class DatabaseTest {
         // incorrect net_id and correct password
         authenticate = db.authenticateUser("erinnnn", "2xAqf9tG47EXhSKA");
         System.out.println("Authenticate user (false): " + authenticate);
+        // null inputs
+        authenticate = db.authenticateUser(null, null);
+        System.out.println("Authenticate user (false): " + authenticate);
 
         System.out.println("\n\n");
 
@@ -69,7 +72,9 @@ public class DatabaseTest {
         System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 1]");
         user = db.retrieveUser("");
         System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 2]");
-
+        user = db.retrieveUser(null);
+        System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto() + "[empty test 3 - null]");
+        
         // should work
         user = db.retrieveUser("shreya");
         System.out.println(user.getName() + ", " + user.getStudentID() + ", " + user.getUserPhoto());
@@ -111,8 +116,7 @@ public class DatabaseTest {
         System.out.print("Village");
         System.out.println(result);
         result = "";
-
-
+        
 
 
 
@@ -167,7 +171,7 @@ public class DatabaseTest {
 
         // Lyon Center - 4 people max for this time slot
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin"));
-        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin")); // should return an error 
+        db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("erin")); // won't make the second booking - should return an error 
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("will"));
         db.makeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea"));       
@@ -177,6 +181,10 @@ public class DatabaseTest {
         db.makeBooking(3, "2022-03-25 06:00:00", db.retrieveUser("rahul"));
        
         db.makeBooking(1, "2022-03-26 06:00:00", db.retrieveUser("erin"));
+        
+        // testing making future bookings (see if thingy will retrieve FutureBookings)
+        db.makeBooking(1, "2022-03-30 06:00:00", db.retrieveUser("erin"));
+        db.makeBooking(3, "2022-03-30 06:00:00", db.retrieveUser("erin"));
                 
         
 
@@ -214,6 +222,7 @@ public class DatabaseTest {
         *
         */     
        db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea"));
+       db.removeBooking(1, "2022-03-25 06:00:00", db.retrieveUser("avonlea")); //
        // check that capacity has gone down
        cap = db.isCapMax(1, "2022-03-25 06:00:00");
        System.out.println("Is capacity max (now false) for 2022-03-25 06:00:00: " + cap);
@@ -227,11 +236,13 @@ public class DatabaseTest {
          *
          */
         User user_booking = new User();
-        ArrayList<String> bookings = new ArrayList<>();
+        ArrayList<String> future_bookings = new ArrayList<>();
+        System.out.println("\n----TESTING PRINTING OUT FUTURE BOOKINGS ----");
 
-        //bookings = db.getFutureBookings(user_booking);
-        
-        
+        user_booking = db.retrieveUser("erin");
+        future_bookings = db.getFutureBookings(user_booking);
+        System.out.println(user_booking.getName());
+        System.out.println(future_bookings);      
         
 
         /*

@@ -42,9 +42,7 @@ public class DatabaseHandler {
     public boolean authenticateUser(String net_id, String password) {
 
         try {
-            //log.info("Connecting to the database");
             conn = datasource.getConnection();
-            //log.info("Connected to the database");
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT * FROM trojanrec.userauth "
@@ -90,9 +88,7 @@ public class DatabaseHandler {
 
         User user = new User();
         try {
-            //log.info("Connecting to the database");
             conn = datasource.getConnection();
-            //log.info("Connected to the database");
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT name, student_id, image_path " +
@@ -186,9 +182,7 @@ public class DatabaseHandler {
     public String getCenterTimeslots(int center_id){
         String output = "";
         try {
-            //log.info("Connecting to the database");
             conn = datasource.getConnection();
-            //log.info("Connected to the database");
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT reservation_time "
@@ -248,9 +242,9 @@ public class DatabaseHandler {
 
             if(rs.next()){
                 max = rs.getInt("cap_max");
-                System.out.println(max);
+                //System.out.println(max);
                 curr = rs.getInt("cap_curr");
-                System.out.println(curr);
+                //System.out.println(curr);
             }
             if(max == curr){
                 return true;
@@ -494,7 +488,7 @@ public class DatabaseHandler {
                            
                        }
                        else {
-                       	log.info("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
+                       	log.info("A user tried to remove a booking, but they didn't have a booking - this is not allowed! No futher action is necessary :-)");
                        }                  
                    }             
            }
