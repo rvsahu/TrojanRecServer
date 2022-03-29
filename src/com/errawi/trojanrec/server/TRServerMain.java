@@ -28,7 +28,8 @@ public class TRServerMain {
 				try { 
 					ClientHandler newClientHandler = new ClientHandler(serverSocket.accept(), databaseHandler);
 					clientHandlers.add(newClientHandler);
-					clientExecutor.submit(newClientHandler); connectedClients += 1; 
+					clientExecutor.submit(newClientHandler); 
+					connectedClients += 1; 
 				} catch (Exception e) { 
 					//TODO: log the exception, printStackTrace() but to a file, etc. 
 				}
