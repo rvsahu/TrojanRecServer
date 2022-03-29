@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 
 public class TRServerMain {
 	public static final int SOCKET_PORT = 1337;
-	public static void main(String[] args) { 
+	public static void main(String[] args) {
 		System.out.println("Initialising data handlers...");
 		List<ClientHandler> clientHandlers = new ArrayList<>(); 
 		ExecutorService clientExecutor = Executors.newCachedThreadPool(); 
@@ -24,6 +24,8 @@ public class TRServerMain {
 		try {
 			System.out.println("Initialising server socket...");
 			serverSocket = new ServerSocket(SOCKET_PORT); //if this works enter a perpetual loop
+			//add a shutdown hook for this program to make sure socket is always closed
+			Runtime.getRuntime().addShutdownHook(new SocketCloser(serverSocket));
 		} catch (SocketException se) {
 			System.err.println("Socket exception while initialising server socket!");
 			se.printStackTrace();
