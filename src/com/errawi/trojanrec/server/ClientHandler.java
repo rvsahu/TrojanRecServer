@@ -213,11 +213,13 @@ public class ClientHandler extends Thread {
         	return bookings;
         }
 
-        
         public void setTimeslots(ArrayList<String> timeslots) {
         	this.timeslots = timeslots;
         }
-
+        
+        public ArrayList<String> getTimeslots() {
+        	return timeslots;
+        }
     }
 	
 	public ClientHandler(Socket socket, DatabaseHandler dbHandler) {
