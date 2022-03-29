@@ -280,7 +280,9 @@ public class ClientHandler extends Thread {
 		while (true) {
 			try {
 				currReq = (ClientRequest)ois.readObject();
-				if (currReq.getFunction() == ServerFunction.LOGIN) {
+				if (currReq == null) {
+					sendFailResponse();
+				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
 					//authenticate user
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
 					
@@ -294,6 +296,13 @@ public class ClientHandler extends Thread {
 					}
 				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
 					sendClosedResponse();
+				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
+					if (userAuthenticated) {
+						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
+						oos.writeObject(currResp);		
+					} else {
+						sendUnauthenticatedResponse();
+					}
 				} else if (!userAuthenticated) {
 					//return UNAUTHENTICATED response, meaning the server
 					//will not perform the client request because the User is not logged in
