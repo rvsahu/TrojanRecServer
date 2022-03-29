@@ -2,6 +2,7 @@ package com.errawi.trojanrec.server;
 
 
 import com.errawi.trojanrec.utils.User;
+import com.errawi.trojanrec.utils.Reservation;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
@@ -105,7 +106,7 @@ public class DatabaseHandler {
                 user.setName(rs.getString(1));
                 user.setStudentID(rs.getLong(2));
                 user.setUserPhoto(rs.getString(3));
-                user.setNetID(rs.getString(4));
+                user.setNetID(net_id);
             }
         }
         catch(SQLException e) {
@@ -232,7 +233,7 @@ public class DatabaseHandler {
      * @return     True if max capacity for timeslot has been filled
      *
      */
-    public synchronized boolean isCapMax(int center_id, String timedate) { // what inputs do we want? this okay?
+    public synchronized boolean isCapMax(Reservation reservation) { // what inputs do we want? this okay?
 
         try {
             conn = datasource.getConnection();
@@ -240,7 +241,7 @@ public class DatabaseHandler {
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
             ResultSet rs = pst.executeQuery();
 
             int max = -1;
@@ -289,14 +290,14 @@ public class DatabaseHandler {
      * @param user       User to add to waitlist table
      *
      */
-    public synchronized void addToWaitlist(int center_id, String timedate, User user) {
+    public synchronized void addToWaitlist(Reservation reservation, User user) {
         try {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
             ResultSet rs = pst.executeQuery();
 
@@ -346,13 +347,13 @@ public class DatabaseHandler {
      * @param user       User to add to booking table
      *
      */
-    public synchronized void makeBooking(int center_id, String timedate, User user) {
+    public synchronized void makeBooking(Reservation reservation, User user) {
         try {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
             ResultSet rs = pst.executeQuery();
 
@@ -435,14 +436,14 @@ public class DatabaseHandler {
     * @param user       User to remove from booking table
     *
     */
-   public synchronized void removeBooking(int center_id, String timedate, User user) {
+   public synchronized void removeBooking(Reservation reservation, User user) {
        try {
            conn = datasource.getConnection();
 
            PreparedStatement pst = conn.prepareStatement
                    ("SELECT timeslot_id "
                    		+ "FROM trojanrec.timeslot "
-                   		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                   		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
            ResultSet rs = pst.executeQuery();
 
@@ -528,8 +529,8 @@ public class DatabaseHandler {
      * @return bookings  List of bookings
      *
      */
-    public synchronized ArrayList<String> getFutureBookings(User user) {
-        ArrayList<String> bookings = new ArrayList<>();
+    public synchronized ArrayList<Reservation> getFutureBookings(User user) {
+        ArrayList<Reservation> bookings = new ArrayList<>();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date_now = formatter.format(new Date(System.currentTimeMillis()));
@@ -550,7 +551,7 @@ public class DatabaseHandler {
 
                 while(rs_k.next()){
 
-                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time "
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
                     		+ "FROM trojanrec.timeslot "
                     		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
                     ResultSet rs_j = pst_j.executeQuery();
@@ -559,7 +560,10 @@ public class DatabaseHandler {
                         int compare = date_now.compareTo(rs_j.getString("reservation_time"));
                         // if current datetime is less than to a booking time, booking is in future
                         if(compare < 0){
-                            bookings.add(rs_j.getString("reservation_time"));
+                        	Reservation reservation = new Reservation();
+                        	reservation.setRecCentre(rs_j.getInt("center_id"));
+                        	reservation.setTimedate(rs_j.getString("reservation_time"));
+                            bookings.add(reservation);
                         }
                     }
                 }
@@ -594,8 +598,8 @@ public class DatabaseHandler {
      * @return bookings  List of bookings
      *
      */
-    public synchronized ArrayList<String> getPastBookings(User user) {
-        ArrayList<String> bookings = new ArrayList<>();
+    public synchronized ArrayList<Reservation> getPastBookings(User user) {
+        ArrayList<Reservation> bookings = new ArrayList<>();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date_now = formatter.format(new Date(System.currentTimeMillis()));
@@ -616,7 +620,7 @@ public class DatabaseHandler {
 
                 while(rs_k.next()){
 
-                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time "
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
                     		+ "FROM trojanrec.timeslot "
                     		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
                     ResultSet rs_j = pst_j.executeQuery();
@@ -625,7 +629,10 @@ public class DatabaseHandler {
                         int compare = date_now.compareTo(rs_j.getString("reservation_time"));
                         // if current datetime is greater than or equal to a booking time, booking is in past
                         if(compare >= 0){
-                            bookings.add(rs_j.getString("reservation_time"));
+                        	Reservation reservation = new Reservation();
+                        	reservation.setRecCentre(rs_j.getInt("center_id"));
+                        	reservation.setTimedate(rs_j.getString("reservation_time"));
+                            bookings.add(reservation);
                         }
                     }
                 }
@@ -659,12 +666,11 @@ public class DatabaseHandler {
     // SERVER-SIDE ACTIONS (probably need some more of these)
     /**
      *
-     * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-     * @param timedate   Time and date of the gym timeslot
+     * @param Reservation  Reservation object containing the time/date and center
      * @return users     Users that were on waitlist for a specific timeslot
      *
      */
-    public synchronized ArrayList<User> getWaitlist(int center_id, String timedate) {
+    public synchronized ArrayList<User> getWaitlist(Reservation reservation) {
         ArrayList<Integer> user_ids = new ArrayList<>();
         ArrayList<User> users = new ArrayList<>();
         User fetch;
@@ -678,7 +684,7 @@ public class DatabaseHandler {
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
@@ -733,14 +739,14 @@ public class DatabaseHandler {
      * clears the entries in the waitlist for a specific center
      *
      */
-    public synchronized void clearWaitlist(int center_id, String timedate) {
+    public synchronized void clearWaitlist(Reservation reservation) {
         try {
             conn = datasource.getConnection();
 
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + center_id + "' AND reservation_time = '" + timedate + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
             ResultSet rs = pst.executeQuery();
 
             // delete all entires in waitlist for that timeslot_id

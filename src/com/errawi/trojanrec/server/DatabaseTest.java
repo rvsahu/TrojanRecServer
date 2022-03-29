@@ -1,6 +1,7 @@
 package com.errawi.trojanrec.server;
 
 import com.errawi.trojanrec.utils.User;
+import com.errawi.trojanrec.utils.Reservation;
 
 import java.util.ArrayList;
 
@@ -146,11 +147,14 @@ public class DatabaseTest {
 		System.out.println("\nPRINTING OUT WAITLIST");
 
 		System.out.println("Printing users on waitlist for Lyon Center 2022-03-25 06:00:00");
-		users_waiting = db.getWaitlist(1, "2022-03-25 06:00:00");
+		Reservation reservation = new Reservation();
+		reservation.setRecCentre(1);
+		reservation.setTimedate("2022-03-25 06:00:00");
+		users_waiting = db.getWaitlist(reservation);
 		for (int i = 0; i < users_waiting.size(); i++) {
 			User w = users_waiting.get(i);
 			System.out
-					.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto() + ", " + user.getNetID());
+					.println(w.getName() + ", " + w.getStudentID() + ", " + w.getUserPhoto() + ", " + w.getNetID());
 		}
 
 		/*
@@ -237,7 +241,7 @@ public class DatabaseTest {
 		 *
 		 */
 		User user_booking = new User();
-		ArrayList<String> future_bookings = new ArrayList<>();
+		ArrayList<Reservation> future_bookings = new ArrayList<>();
 		System.out.println("\n----TESTING PRINTING OUT FUTURE BOOKINGS ----");
 
 		user_booking = db.retrieveUser("erin");
@@ -252,13 +256,19 @@ public class DatabaseTest {
 		 *
 		 */
 		User user_bookingg = new User();
-		ArrayList<String> past_bookings = new ArrayList<>();
+		ArrayList<Reservation> past_bookings = new ArrayList<>();
 		System.out.println("\n----TESTING PRINTING OUT PAST BOOKINGS ----");
 
 		user_bookingg = db.retrieveUser("erin");
 		past_bookings = db.getPastBookings(user_bookingg);
 		System.out.println(user_bookingg.getName());
-		System.out.println(past_bookings);
+		
+		for(int i=0; i<past_bookings.size(); i++) {
+			Reservation test = past_bookings.get(i);
+			System.out.println(test.getTimedate());
+			System.out.println(test.getRecCentre());
+		}
+		
 
 		System.out.println("\n**** TESTING DONE ****");
 		/*

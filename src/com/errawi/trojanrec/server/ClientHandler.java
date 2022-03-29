@@ -6,8 +6,10 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import com.errawi.trojanrec.utils.User;
+import com.errawi.trojanrec.utils.Reservation;
 
 //TODO: for the debugging portion we'll likely want to implement some
 //logging to files
@@ -97,6 +99,18 @@ public class ClientHandler extends Thread {
          * and likewise for the wait list.
          */
         private int recCentre;
+        
+        /**
+         * ArrayList of reservation times/dates for retrieving past and future bookings.
+         */
+        private ArrayList<Reservation> bookings;
+        
+        
+        /**
+         * Reservation object with timedate and center for the reservation.
+         * useful for creating a booking, retrieving waitlist for specific reservation
+         */
+        private Reservation reservation;
 
         /**
          * String representing a time slot in a recreation centre (and the specific one is
@@ -124,6 +138,14 @@ public class ClientHandler extends Thread {
         public void setTimeslot(String timeslot) {
             this.timeslot = timeslot;
         }
+        
+        public void setBookings(ArrayList<Reservation> bookings) {
+        	this.bookings = bookings;
+        }
+        
+        public void setReservation(Reservation reservation) {
+        	this.reservation = reservation;
+        }
 
         public ServerFunction getFunction() {
             return function;
@@ -144,6 +166,14 @@ public class ClientHandler extends Thread {
         public String getTimeslot() {
             return timeslot;
         }
+        
+        public ArrayList<Reservation> getBookings() {
+        	return bookings;
+        }
+        
+        public Reservation getReservation() {
+        	return reservation;
+        }
     }
 
     private static class ServerResponse implements Serializable {
@@ -152,6 +182,8 @@ public class ClientHandler extends Thread {
         private ResponseType responseType;
 
         private User user;
+        
+        private ArrayList<Reservation> bookings;
 
         public ServerResponse(ResponseType responseType) {
             this.responseType = responseType;
@@ -171,6 +203,10 @@ public class ClientHandler extends Thread {
 
         public User getUser() {
             return user;
+        }
+        
+        public void setBookings(ArrayList<Reservation> bookings) {
+        	this.bookings = bookings;
         }
     }
 	
@@ -263,7 +299,36 @@ public class ClientHandler extends Thread {
 						//send fail response back to client
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {
+				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {					
+					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
+					currResp = new ServerResponse(ResponseType.SUCCESS);
+					currResp.setBookings(reservations);	
+					oos.writeObject(currResp);					
+				}
+				else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
+					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
+					currResp = new ServerResponse(ResponseType.SUCCESS);
+					currResp.setBookings(reservations);	
+					oos.writeObject(currResp);					
+				}
+				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
+					ArrayList<User> waitlist_users = dbHandler.getWaitlist(currReq.getReservation());
+					currResp = new ServerResponse(ResponseType.SUCCESS);
+					
+					
+				}
+				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
+					
+				}
+				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
+					// check if maxCap
+					
+					// if(maxCap()) add to waitlist
+					
+					// else add to bookings
+					
+				}
+				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
 					
 				}
 			} catch (ClassCastException cce) {
