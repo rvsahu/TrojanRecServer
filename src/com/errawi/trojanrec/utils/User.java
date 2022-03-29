@@ -35,6 +35,13 @@ public class User implements Serializable {
         studentID = -1;
         userPhoto = "";
     }
+    
+    public User(String netID) {
+        name = "";
+        this.netID = netID;
+        studentID = -1;
+        userPhoto = "";
+    }
 
     public void setName(String name) {
         this.name = name;
