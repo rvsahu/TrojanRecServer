@@ -216,8 +216,8 @@ public class ClientHandler extends Thread {
         	this.bookings = bookings;
         }
         
-        public void setSendUsers(ArrayList<User> send_users) {
-        	this.send_users = send_users;
+        public ArrayList<Reservation> getBookings() {
+        	return bookings;
         }
         
         public void setTimeslots(ArrayList<String> timeslots) {
