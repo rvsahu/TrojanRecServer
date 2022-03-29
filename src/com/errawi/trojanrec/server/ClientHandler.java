@@ -314,7 +314,7 @@ public class ClientHandler extends Thread {
 				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
 					ArrayList<User> waitlist_users = dbHandler.getWaitlist(currReq.getReservation());
 					currResp = new ServerResponse(ResponseType.SUCCESS);
-					
+					currResp.
 					
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
