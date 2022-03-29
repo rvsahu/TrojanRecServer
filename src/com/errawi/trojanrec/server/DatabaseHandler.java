@@ -205,6 +205,7 @@ public class DatabaseHandler {
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
+            timeslots = null;
         }
         finally {
             try{
@@ -220,6 +221,7 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
+                timeslots = null;
             }
         }
         return timeslots;
@@ -567,6 +569,7 @@ public class DatabaseHandler {
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
+            bookings = null;
         }
         finally {
             try{
@@ -582,6 +585,7 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
+                bookings = null;
             }
         }
         return bookings;
@@ -636,6 +640,7 @@ public class DatabaseHandler {
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
+            bookings = null;
         }
         finally {
             try{
@@ -651,9 +656,65 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
+                bookings = null;
             }
         }
         return bookings;
+    }
+    
+    public synchronized ArrayList<Reservation> getWaitlistForUser(User user) {
+    	
+    	ArrayList<Reservation> waitlist_reservations = new ArrayList<>();
+
+        PreparedStatement pst_j;
+        ResultSet rs_j;
+
+        try {
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement("SELECT timeslot_id "
+            		+ "FROM trojanrec.waitlist "
+            		+ "WHERE user_id = '" + rs.getInt("user_id") + "'");
+            ResultSet rs = pst.executeQuery();
+            
+            while(rs.next()) {
+            	pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
+            			+ "FROM trojanrec.timeslot "
+            			+ "WHERE timeslot_id = '" + rs.getInt("timeslot_id"));
+            	rs_j = pst_j.executeQuery();
+            	
+            	if(rs_j.next()) {
+                	Reservation reservation = new Reservation();
+                	reservation.setRecCentre(rs_j.getInt("center_id"));
+                	reservation.setTimedate(rs_j.getString("reservation_time"));
+                    waitlist_reservations.add(reservation);
+            	}
+            }
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+            e.printStackTrace();
+            waitlist_reservations = null;
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+                e.printStackTrace();
+                waitlist_reservations = null;
+            }
+        }
+        return waitlist_reservations;   	
     }
 
 
