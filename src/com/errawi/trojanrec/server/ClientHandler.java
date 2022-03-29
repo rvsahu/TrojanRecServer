@@ -283,9 +283,15 @@ public class ClientHandler extends Thread {
 				if (currReq == null) {
 					sendFailResponse();
 				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
+					//check if user already authenticated
+					if (userAuthenticated) {
+						//send AUTHENTICATED response
+						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
+						oos.writeObject(currResp);	
+					}
 					//authenticate user
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
-					
+					//check if successful or not
 					if (userAuthenticated) {
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
