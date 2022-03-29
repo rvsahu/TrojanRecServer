@@ -11,7 +11,27 @@ import java.util.concurrent.ExecutorService;
 
 public class TRServerMain {
 	public static final int SOCKET_PORT = 1337;
+	
+	/**
+	 * CL code to kill anything listening on the port
+	 * @param args
+	 */
+	private static final String KILL_COMMAND = "kill -9 $(lsof -t -i:" + SOCKET_PORT + ")";
+	
 	public static void main(String[] args) {
+		System.out.println("Killing any existing processes on the port.");
+		try {
+			Process p = Runtime.getRuntime().exec(KILL_COMMAND);
+			p.waitFor();
+			System.out.println("Processes killed!");
+			p.destroy();
+		} catch (IOException ioe) {
+			System.err.println("IO exception killing existing processes on port " + SOCKET_PORT +"!");
+			ioe.printStackTrace();
+			System.exit(-1);
+		} catch (InterruptedException ie) {
+			System.err.println("Interrupted while killing existing processes on port " + SOCKET_PORT +"!");
+		}
 		System.out.println("Initialising data handlers...");
 		List<ClientHandler> clientHandlers = new ArrayList<>(); 
 		ExecutorService clientExecutor = Executors.newCachedThreadPool(); 
