@@ -55,6 +55,10 @@ public class ClientHandler extends Thread {
         GET_PREVIOUS_BOOKINGS, GET_WAIT_LIST, GET_CENTRE_TIME_SLOTS, MAKE_BOOKING,
         CANCEL_BOOKING, CANCEL_WAIT_LIST, POLL_FOR_NOTIFICATIONS, CLOSE
     }
+    
+    //TODO: current bookings, previous bookings, get waitlist, 
+    //TODO: get centre time slots, make booking+join waitlist,
+    //TODO: cancel booking, 
 
     /**
      * Enumerates conditions with which the server could respond to the
