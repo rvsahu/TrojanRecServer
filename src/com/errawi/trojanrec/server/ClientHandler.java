@@ -117,7 +117,7 @@ public class ClientHandler extends Thread {
          * defined by the recCentre field). This would be used by the server in the cases of
          * making a booking, cancelling one, and likewise for the wait list.
          */
-        private String timeslot;
+        private String timeslot;    
 
         public ClientRequest(ServerFunction function) {
             this.function = function;
@@ -146,7 +146,7 @@ public class ClientHandler extends Thread {
         public void setReservation(Reservation reservation) {
         	this.reservation = reservation;
         }
-
+        
         public ServerFunction getFunction() {
             return function;
         }
@@ -184,6 +184,13 @@ public class ClientHandler extends Thread {
         private User user;
         
         private ArrayList<Reservation> bookings;
+        
+        /**
+         * Sending a list of users. Useful for sending a group of users on the waitlist
+         */
+        private ArrayList<User> send_users;
+        
+        private ArrayList<String> timeslots;
 
         public ServerResponse(ResponseType responseType) {
             this.responseType = responseType;
@@ -208,6 +215,15 @@ public class ClientHandler extends Thread {
         public void setBookings(ArrayList<Reservation> bookings) {
         	this.bookings = bookings;
         }
+        
+        public void setSendUsers(ArrayList<User> send_users) {
+        	this.send_users = send_users;
+        }
+        
+        public void setTimeslots(ArrayList<String> timeslots) {
+        	this.timeslots = timeslots;
+        }
+
     }
 	
 	public ClientHandler(Socket socket, DatabaseHandler dbHandler) {
@@ -314,19 +330,27 @@ public class ClientHandler extends Thread {
 				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
 					ArrayList<User> waitlist_users = dbHandler.getWaitlist(currReq.getReservation());
 					currResp = new ServerResponse(ResponseType.SUCCESS);
-					currResp.
-					
+					currResp.setSendUsers(waitlist_users);
+					oos.writeObject(currResp);			
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
-					
+					ArrayList<String> timeslots = dbHandler.getCenterTimeslots(currReq.getRecCentre());
+					currResp = new ServerResponse(ResponseType.SUCCESS);
+					currResp.setTimeslots(timeslots);
+					oos.writeObject(currResp);			
 				}
 				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
-					// check if maxCap
 					
-					// if(maxCap()) add to waitlist
-					
-					// else add to bookings
-					
+					boolean max_cap = dbHandler.isCapMax(currReq.getReservation());
+					if(max_cap) {
+						// add user to waitlist
+						
+					}
+					else {
+						// make booking
+						dbHandler.makeBooking(currReq.getReservation(), currReq.getUser());			
+
+					}									
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
 					

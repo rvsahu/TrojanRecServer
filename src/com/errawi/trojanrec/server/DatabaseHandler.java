@@ -186,8 +186,8 @@ public class DatabaseHandler {
      * @return     String printout of timeslots (can format in a more desirable way - ArrayList?)
      *
      */
-    public synchronized String getCenterTimeslots(int center_id){
-        String output = "";
+    public synchronized ArrayList<String> getCenterTimeslots(int center_id){
+        ArrayList<String> timeslots = new ArrayList<>();
         try {
             conn = datasource.getConnection();
 
@@ -200,7 +200,7 @@ public class DatabaseHandler {
 
             // Use setters defined in User class
             while(rs.next()){
-                output = output + '\n' + rs.getString("reservation_time");
+            	timeslots.add(rs.getString("reservation_time"));
             }
         }
         catch(SQLException e) {
@@ -222,14 +222,13 @@ public class DatabaseHandler {
                 log.info("SQLException Message: " + e.getMessage());
             }
         }
-        return output;
+        return timeslots;
     }
 
 
     /**
      *
-     * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-     * @param timedate   Time and date of the gym timeslot
+     * @param Reservation  Reservation object containing the time/date and center
      * @return     True if max capacity for timeslot has been filled
      *
      */
@@ -285,8 +284,7 @@ public class DatabaseHandler {
 
     /**
      *
-     * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-     * @param timedate   Time and date of the gym timeslot
+     * @param Reservation  Reservation object containing the time/date and center
      * @param user       User to add to waitlist table
      *
      */
@@ -342,8 +340,7 @@ public class DatabaseHandler {
 
     /**
      *
-     * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-     * @param timedate   Time and date of the gym timeslot
+     * @param Reservation  Reservation object containing the time/date and center
      * @param user       User to add to booking table
      *
      */
@@ -431,8 +428,7 @@ public class DatabaseHandler {
     
     /**
     *
-    * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-    * @param timedate   Time and date of the gym timeslot
+    * @param Reservation  Reservation object containing the time/date and center
     * @param user       User to remove from booking table
     *
     */
@@ -734,8 +730,7 @@ public class DatabaseHandler {
 
     /**
      *
-     * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
-     * @param timedate   Time and date of the gym timeslot
+     * @param Reservation  Reservation object containing the time/date and center
      * clears the entries in the waitlist for a specific center
      *
      */
