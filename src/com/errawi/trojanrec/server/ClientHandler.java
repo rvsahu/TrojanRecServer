@@ -183,12 +183,7 @@ public class ClientHandler extends Thread {
 
         private User user;
         
-        private ArrayList<Reservation> bookings;
-        
-        /**
-         * Sending a list of users. Useful for sending a group of users on the waitlist
-         */
-        private ArrayList<User> send_users;
+        private ArrayList<Reservation> bookings;     
         
         private ArrayList<String> timeslots;
 
@@ -219,6 +214,7 @@ public class ClientHandler extends Thread {
         public ArrayList<Reservation> getBookings() {
         	return bookings;
         }
+
         
         public void setTimeslots(ArrayList<String> timeslots) {
         	this.timeslots = timeslots;
@@ -317,43 +313,59 @@ public class ClientHandler extends Thread {
 					}
 				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {					
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
-					currResp.setBookings(reservations);	
-					oos.writeObject(currResp);					
+					if(reservations != null) {
+						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp.setBookings(reservations);	
+						oos.writeObject(currResp);					
+					} else {
+						sendFailResponse();
+					}									
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
-					currResp.setBookings(reservations);	
-					oos.writeObject(currResp);					
+					if(reservations != null) {
+						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp.setBookings(reservations);	
+						oos.writeObject(currResp);	
+					} else {
+						sendFailResponse();
+					}	
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
-					ArrayList<User> waitlist_users = dbHandler.getWaitlist(currReq.getReservation());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
-					currResp.setSendUsers(waitlist_users);
-					oos.writeObject(currResp);			
+					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
+					if(waitlist_reservations != null) {
+						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp.setBookings(waitlist_reservations);
+						oos.writeObject(currResp);	
+					} else {
+						sendFailResponse();
+					}
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
 					ArrayList<String> timeslots = dbHandler.getCenterTimeslots(currReq.getRecCentre());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
-					currResp.setTimeslots(timeslots);
-					oos.writeObject(currResp);			
+					if(timeslots != null) {
+						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp.setTimeslots(timeslots);
+						oos.writeObject(currResp);		
+					} else {
+						sendFailResponse();
+					}
 				}
-				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
-					
+				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {					
 					boolean max_cap = dbHandler.isCapMax(currReq.getReservation());
 					if(max_cap) {
-						// add user to waitlist
-						
+						// add user to waitlist because the bookings are full for that reservation time
+						dbHandler.addToWaitlist(currReq.getReservation(), currReq.getUser());			
 					}
 					else {
 						// make booking
 						dbHandler.makeBooking(currReq.getReservation(), currReq.getUser());			
-
-					}									
+					}	
+					currResp = new ServerResponse(ResponseType.SUCCESS);				
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
-					
+					dbHandler.removeBooking(currReq.getReservation(), currReq.getUser());
+					currResp = new ServerResponse(ResponseType.SUCCESS);				
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
