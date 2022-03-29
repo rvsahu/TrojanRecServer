@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 public class TRServerMain {
 	public static final int SOCKET_PORT = 1337;
 	public static void main(String[] args) { 
+		System.out.println("Initialising data handlers...");
 		List<ClientHandler> clientHandlers = new ArrayList<>(); 
 		ExecutorService clientExecutor = Executors.newCachedThreadPool(); 
 		DatabaseHandler databaseHandler = new DatabaseHandler();
@@ -20,8 +21,10 @@ public class TRServerMain {
 		ServerSocket serverSocket;
 		
 		//first initialise server socket 
-		try { 
+		try {
+			System.out.println("Initialising server socket...");
 			serverSocket = new ServerSocket(SOCKET_PORT); //if this works enter a perpetual loop
+			System.out.println("Listening for connections..."); //TODO: output this to a log file too
 			while (true) { 
 				try { 
 					Socket newSocket = serverSocket.accept();
@@ -43,6 +46,7 @@ public class TRServerMain {
 	}
 	
 	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler) {
+		System.out.println("New client connection!"); //TODO: output to a log file too
 		return new ClientHandler(socket, dbHandler);
 	}
 }
