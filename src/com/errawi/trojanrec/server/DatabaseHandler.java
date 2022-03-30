@@ -684,6 +684,7 @@ public class DatabaseHandler {
                 bookings = null;
             }
         }
+        System.out.println(bookings.size());
         return bookings;
     }
 
@@ -755,6 +756,7 @@ public class DatabaseHandler {
                 bookings = null;
             }
         }
+        System.out.println(bookings.size());
         return bookings;
     }
     
@@ -810,6 +812,7 @@ public class DatabaseHandler {
                 waitlist_reservations = null;
             }
         }
+        System.out.println(waitlist_reservations.size());
         return waitlist_reservations;   	
     }
 
