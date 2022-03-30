@@ -111,6 +111,7 @@ public class DatabaseHandler {
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
+            user = null;
         }
         finally {
             try{
@@ -126,6 +127,7 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
+                user = null;
             }
         }
         return user;
@@ -160,6 +162,7 @@ public class DatabaseHandler {
         }
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
+            user = null;
         }
         finally {
             try{
@@ -175,9 +178,55 @@ public class DatabaseHandler {
             }
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
+                user = null;
             }
         }
         return user;
+    }
+    
+    /*
+     * Check that the gym timeslot actually exists before allowing user to make booking, etc.
+     */
+    
+    public synchronized boolean reservationExists(Reservation reservation) {
+        try {
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement
+                    ("SELECT * FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
+            ResultSet rs = pst.executeQuery();
+
+            if(rs.next()) {
+                return true;
+            }
+            // no user was present in ResultSet, reservation does not exist
+            log.info("Reservation does not exist");
+            return false;
+            
+        }
+        catch(SQLException e) {
+            log.info("SQLException Message: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+                //datasource.close();
+            }
+            catch(SQLException e){
+                log.info("SQLException Message: " + e.getMessage());
+            }
+        }
+        return false;
+    	
     }
 
     /**
@@ -187,6 +236,8 @@ public class DatabaseHandler {
      *
      */
     public synchronized ArrayList<String> getCenterTimeslots(int center_id){
+    	
+    	
         ArrayList<String> timeslots = new ArrayList<>();
         try {
             conn = datasource.getConnection();
@@ -234,7 +285,13 @@ public class DatabaseHandler {
      * @return     True if max capacity for timeslot has been filled
      *
      */
-    public synchronized boolean isCapMax(Reservation reservation) { // what inputs do we want? this okay?
+    public synchronized boolean isCapMax(Reservation reservation) { 
+    	
+    	boolean exists = reservationExists(reservation);
+    	if(!exists) {
+    		log.info("Reservation does not exist");
+    		return false;
+    	}
 
         try {
             conn = datasource.getConnection();
@@ -291,6 +348,13 @@ public class DatabaseHandler {
      *
      */
     public synchronized void addToWaitlist(Reservation reservation, User user) {
+    	
+    	boolean exists = reservationExists(reservation);
+    	if(!exists) {
+    		log.info("Reservation does not exist");
+    		return;
+    	}
+    	
         try {
             conn = datasource.getConnection();
 
@@ -312,10 +376,28 @@ public class DatabaseHandler {
                 		+ "WHERE name = '" + user.getName() + "'");
                 rs_k = pst_k.executeQuery();
                 if(rs_k.next()){
-                    String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) "
-                    		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
-                    stmt = conn.createStatement();
-                    stmt.executeUpdate(sql);
+                	
+                	
+                    // query - if user already has made waitlist booking at that center/timedate
+                    PreparedStatement pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * "
+                    		+ "FROM trojanrec.waitlist "
+                    		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + rs_k.getInt("user_id") + "')");                      
+                    ResultSet rs_j = pst_j.executeQuery();
+                    int booking_made = 0;
+                    if(rs_j.next()) {
+                    	booking_made = rs_j.getInt(1);
+                    } 
+                	
+                    if(booking_made == 0) {
+                        String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) "
+                        		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
+                        stmt = conn.createStatement();
+                        stmt.executeUpdate(sql);                	
+                    }
+                    else {
+                    	log.info("A user tried to make a duplicate waitlist booking - this is not allowed! No futher action is necessary :-)");
+                    }   
+
                 }
             }
         }
@@ -347,6 +429,13 @@ public class DatabaseHandler {
      *
      */
     public synchronized void makeBooking(Reservation reservation, User user) {
+    	
+    	boolean exists = reservationExists(reservation);
+    	if(!exists) {
+    		log.info("Reservation does not exist");
+    		return;
+    	}
+    	
         try {
             conn = datasource.getConnection();
 
@@ -385,7 +474,7 @@ public class DatabaseHandler {
                         int booking_made = 0;
                         if(rs_j.next()) {
                         	booking_made = rs_j.getInt(1);
-                        }
+                        }                                            
                         
                         // user doesn't have booking yet
                         if(booking_made == 0) {                                                 
@@ -435,6 +524,13 @@ public class DatabaseHandler {
     *
     */
    public synchronized void removeBooking(Reservation reservation, User user) {
+
+	   boolean exists = reservationExists(reservation);
+	   if(!exists) {
+   		   log.info("Reservation does not exist");
+   		   return;
+	   }
+   	
        try {
            conn = datasource.getConnection();
 
@@ -734,6 +830,13 @@ public class DatabaseHandler {
 
         PreparedStatement pst_j;
         ResultSet rs_j;
+        
+    	boolean exists = reservationExists(reservation);
+    	if(!exists) {
+    		log.info("Reservation does not exist");
+    		users = null;
+    		return users;
+    	}
 
         try {
             conn = datasource.getConnection();
@@ -766,6 +869,7 @@ public class DatabaseHandler {
         catch(SQLException e) {
             log.info("SQLException Message: " + e.getMessage());
             e.printStackTrace();
+            users = null;
         }
         finally {
             try{
@@ -782,6 +886,7 @@ public class DatabaseHandler {
             catch(SQLException e){
                 log.info("SQLException Message: " + e.getMessage());
                 e.printStackTrace();
+                users = null;
             }
         }
         return users;
@@ -796,6 +901,13 @@ public class DatabaseHandler {
      *
      */
     public synchronized void clearWaitlist(Reservation reservation) {
+    	
+    	boolean exists = reservationExists(reservation);
+    	if(!exists) {
+    		log.info("Reservation does not exist");
+    		return;
+    	}
+    	
         try {
             conn = datasource.getConnection();
 
@@ -875,5 +987,7 @@ public class DatabaseHandler {
         }
     	
     }
+    
+
 
 }
