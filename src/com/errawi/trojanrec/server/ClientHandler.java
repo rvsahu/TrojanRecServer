@@ -227,6 +227,10 @@ public class ClientHandler extends Thread {
 				}
 				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
 					System.out.println("Make booking attempt"); //TODO: log this to a file
+					//TODO: modify client side code to send a reservation rather than construct one here
+					Reservation res = new Reservation();
+					res.setRecCentre(currReq.getRecCentre());
+					res.setTimedate(currReq.getTimeslot());
 					boolean max_cap = dbHandler.isCapMax(currReq.getReservation());
 					if(max_cap) {
 						System.out.println("Make bookings good"); //TODO: log this to a file
