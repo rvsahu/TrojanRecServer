@@ -296,13 +296,16 @@ public class DatabaseHandler {
     	*/
     	System.out.println("isCapMax: res exists");
         try {
+        	
+        	
+        	
         	System.out.println("isCapMax: making connection");
             conn = datasource.getConnection();
             System.out.println("isCapMax: preparing statement");
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + "2022-03-31 16:00:00" + "'");
             System.out.println("isCapMax: getting results");
             ResultSet rs = pst.executeQuery();
             System.out.println("isCapMax: results gotten");
