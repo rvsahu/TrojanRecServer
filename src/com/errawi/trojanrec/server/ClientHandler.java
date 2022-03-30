@@ -102,7 +102,7 @@ public class ClientHandler extends Thread {
 			return;
 		} catch (EOFException eofe) {
 			System.out.println("Client disconnected"); //TODO: log this to a file
-			eofe.printStackTrace();
+			//eofe.printStackTrace();
 		} catch (IOException ioe) {
 			System.out.println("Connect bad"); //TODO: log this to a file
 			ioe.printStackTrace();
@@ -114,6 +114,7 @@ public class ClientHandler extends Thread {
 		while (true) {
 			try {
 				currReq = (ClientRequest)ois.readObject();
+				System.out.print("new request recieved: ");
 				if (currReq == null) {
 					sendFailResponse();
 				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
@@ -172,61 +173,78 @@ public class ClientHandler extends Thread {
 						//send fail response back to client
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {					
+				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {
+					System.out.println("Current bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
 					if(reservations != null) {
+						System.out.println("Current bookings good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(reservations);	
 						oos.writeObject(currResp);					
 					} else {
+						System.out.println("Current bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}									
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
+					System.out.println("Previous bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
+						System.out.println("Previous bookings good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(reservations);	
 						oos.writeObject(currResp);	
 					} else {
+						System.out.println("Previous bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}	
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
+					System.out.println("Wait list attempt"); //TODO: log this to a file
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
+						System.out.println("Wait list good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(waitlist_reservations);
 						oos.writeObject(currResp);	
 					} else {
+						System.out.println("Wait list bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
+					System.out.println("Get slots attempt"); //TODO: log this to a file
 					ArrayList<String> timeslots = dbHandler.getCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
+						System.out.println("Get slots good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setTimeslots(timeslots);
 						oos.writeObject(currResp);		
 					} else {
+						System.out.println("Get slots bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
 				}
-				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {					
+				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
+					System.out.println("Make booking attempt"); //TODO: log this to a file
 					boolean max_cap = dbHandler.isCapMax(currReq.getReservation());
 					if(max_cap) {
+						System.out.println("Make bookings good"); //TODO: log this to a file
 						// add user to waitlist because the bookings are full for that reservation time
 						dbHandler.addToWaitlist(currReq.getReservation(), currReq.getUser());			
 					}
 					else {
+						System.out.println("Make bookings bad"); //TODO: log this to a file
 						// make booking
 						dbHandler.makeBooking(currReq.getReservation(), currReq.getUser());			
 					}	
 					currResp = new ServerResponse(ResponseType.SUCCESS);				
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
+					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
 					dbHandler.removeBooking(currReq.getReservation(), currReq.getUser());
 					currResp = new ServerResponse(ResponseType.SUCCESS);				
+					System.out.println("Current bookings bad"); //TODO: log this to a file
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
@@ -242,7 +260,7 @@ public class ClientHandler extends Thread {
 				return;
 			} catch (EOFException eofe) {
 				System.out.println("Client disconnected"); //TODO: log this to a file
-				eofe.printStackTrace();
+				//eofe.printStackTrace();
 				return;
 			} catch (IOException ioe) {
 				//some error reading from input stream. errors sending back would be handled
