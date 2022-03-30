@@ -336,13 +336,20 @@ public class DatabaseHandler {
             try{
             	System.out.println("isCapMax: closing rs, pst, con");
                 if(rs != null){
+                	System.out.println("isCapMax: closing rs");
                     rs.close();
+                    System.out.println("isCapMax: rs closed");
                 }
+                
                 if(pst != null){
+                	System.out.println("isCapMax: closing pst");
                     pst.close();
+                    System.out.println("isCapMax: pst closed");
                 }
                 if(conn != null){
+                	System.out.println("isCapMax: closing conn");
                     conn.close();
+                    System.out.println("isCapMax: conn closed");
                 }
             }
             catch(SQLException e){
