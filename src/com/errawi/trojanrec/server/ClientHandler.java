@@ -1,5 +1,6 @@
 package com.errawi.trojanrec.server;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -67,16 +68,18 @@ public class ClientHandler extends Thread {
 		//accept the first communication, basically a handshake.
 		//once this is done successfully, enter infinite loop.
 		ClientRequest currReq; //used to reference current client request
-		ServerResponse currResp; //references response to current request, may be sent or unsent
-		
+		ServerResponse currResp; //references response to current request, may be sent or unsent	
 		try {
 			currReq = (ClientRequest)ois.readObject();
+			System.out.println("Connection attempt"); //TODO: log this to a file
 			if (currReq.getFunction() == ServerFunction.CONNECT) {
 				//expected input, send back connection successful to
 				//complete handshake
+				System.out.println("Connect good"); //TODO: log this to a file
 				currResp = new ServerResponse(ResponseType.CONNECTED);
 				oos.writeObject(currResp);
 			} else {
+				System.out.println("Connect bad"); //TODO: log this to a file
 				//received another request when it should have been CONNECT
 				//send a CLOSED type server response and close connection
 				sendClosedResponse();
@@ -86,19 +89,25 @@ public class ClientHandler extends Thread {
 		} catch (ClassCastException cce) {
 			//object sent was not a ClientRequest
 			//send a CLOSED type server response and close connection
+			System.out.println("Connect bad"); //TODO: log this to a file
 			sendClosedResponse();
 			//exit run() (which ends thread)
 			return;
 		} catch (ClassNotFoundException cnfe) {
 			//not quite sure how we would get here but compiler says need to check for it
 			//send a CLOSED type server response and close connection
+			System.out.println("Connect bad"); //TODO: log this to a file
 			sendClosedResponse();
 			//exit run() (which ends thread)
 			return;
+		} catch (EOFException eofe) {
+			System.out.println("Client disconnected"); //TODO: log this to a file
+			eofe.printStackTrace();
 		} catch (IOException ioe) {
+			System.out.println("Connect bad"); //TODO: log this to a file
 			ioe.printStackTrace();
 			return;
-		}
+		} 
 		
 		//connection successful. now thread enters main loop where it handles
 		//all requests
@@ -108,30 +117,39 @@ public class ClientHandler extends Thread {
 				if (currReq == null) {
 					sendFailResponse();
 				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
+					System.out.println("Login attempt"); //TODO: log this to a file
 					//check if user already authenticated
 					if (userAuthenticated) {
+						System.out.println("Already logged in"); //TODO: log this to a file
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
-						oos.writeObject(currResp);	
+						oos.writeObject(currResp);
+						continue;
 					}
 					//authenticate user
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
 					//check if successful or not
 					if (userAuthenticated) {
+						System.out.println("Login good"); //TODO: log this to a file
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
 						oos.writeObject(currResp);		
 					} else {
 						//send UNAUTHENTICATED response
+						System.out.println("Login bad"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 					}
 				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
+					System.out.println("Close request"); //TODO: log this to a file
 					sendClosedResponse();
 				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
+					System.out.println("Check login attempt"); //TODO: log this to a file
 					if (userAuthenticated) {
+						System.out.println("Check login good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
 						oos.writeObject(currResp);		
 					} else {
+						System.out.println("Check login bad"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 					}
 				} else if (!userAuthenticated) {
@@ -140,14 +158,17 @@ public class ClientHandler extends Thread {
 					sendUnauthenticatedResponse();
 				} else if (currReq.getFunction() == ServerFunction.GET_PROFILE_INFO) {
 					//get server side User object from client side user's net ID
+					System.out.println("Profile attempt"); //TODO: log this to a file
 					User serverSideUser = dbHandler.retrieveUser(currReq.getUser().getNetID());
 					//check if serverSideUser actually exists (studentID should not be -1)
 					if (serverSideUser.getStudentID() != -1) {
+						System.out.println("Profile good"); //TODO: log this to a file
 						//send server side user back to client
 						currResp = new ServerResponse(ResponseType.SUCCESS); //create response with SUCCESS type
 						currResp.setUser(serverSideUser); //add server-side user to response
 						oos.writeObject(currResp); //send response
 					} else {
+						System.out.println("Profile bad"); //TODO: log this to a file
 						//send fail response back to client
 						sendFailResponse();
 					}
@@ -218,6 +239,10 @@ public class ClientHandler extends Thread {
 				//send a CLOSED type server response and close connection
 				sendClosedResponse();
 				//exit run() (which ends thread)
+				return;
+			} catch (EOFException eofe) {
+				System.out.println("Client disconnected"); //TODO: log this to a file
+				eofe.printStackTrace();
 				return;
 			} catch (IOException ioe) {
 				//some error reading from input stream. errors sending back would be handled
