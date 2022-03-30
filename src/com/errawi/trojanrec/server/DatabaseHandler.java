@@ -305,7 +305,7 @@ public class DatabaseHandler {
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + "2022-03-31 16:00:00" + "'");
+                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
             System.out.println("isCapMax: getting results");
             ResultSet rs = pst.executeQuery();
             System.out.println("isCapMax: results gotten");
