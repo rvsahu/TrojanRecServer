@@ -6,9 +6,7 @@ import java.util.ArrayList;
 /**
  * ClientRequest is the framework for client-to-server communication. It contains
  * a specific function that the client wishes the server to perform, and the
- * relevant information that the server needs to be able to perform it. This
- * exists as a nest private class because for security reasons we don't really
- * want another part of the program to be able to access/create these.
+ * relevant information that the server needs to be able to perform it.
  */
 public class ClientRequest implements Serializable {
     private static final long serialVersionUID = 20220328L;
