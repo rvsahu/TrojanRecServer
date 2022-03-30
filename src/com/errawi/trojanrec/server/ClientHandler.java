@@ -249,9 +249,12 @@ public class ClientHandler extends Thread {
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
 					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
-					dbHandler.removeBooking(currReq.getReservation(), currReq.getUser());
+					Reservation res = new Reservation();
+					res.setRecCentre(currReq.getRecCentre());
+					res.setTimedate(currReq.getTimeslot());
+					dbHandler.removeBooking(res, currReq.getUser());
 					currResp = new ServerResponse(ResponseType.SUCCESS);				
-					System.out.println("Current bookings bad"); //TODO: log this to a file
+					System.out.println("Current bookings good (in theory)"); //TODO: log this to a file
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
