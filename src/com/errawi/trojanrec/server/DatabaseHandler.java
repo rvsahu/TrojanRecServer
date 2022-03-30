@@ -287,11 +287,13 @@ public class DatabaseHandler {
      */
     public synchronized boolean isCapMax(Reservation reservation) { 
     	System.out.println("isCapMax: checking res");
+    	/*
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
     		System.out.println("Reservation does not exist");
     		return false;
     	}
+    	*/
     	System.out.println("isCapMax: res exists");
         try {
         	System.out.println("isCapMax: making connection");
