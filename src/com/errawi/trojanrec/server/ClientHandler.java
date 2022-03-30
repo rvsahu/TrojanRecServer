@@ -238,12 +238,12 @@ public class ClientHandler extends Thread {
 					if(max_cap) {
 						System.out.println("Make bookings bad, waitlist instead"); //TODO: log this to a file
 						// add user to wait list because the bookings are full for that reservation time
-						dbHandler.addToWaitlist(currReq.getReservation(), currReq.getUser());			
+						dbHandler.addToWaitlist(res, currReq.getUser());			
 					}
 					else {
 						System.out.println("Make bookings good"); //TODO: log this to a file
 						// make booking
-						dbHandler.makeBooking(currReq.getReservation(), currReq.getUser());			
+						dbHandler.makeBooking(res, currReq.getUser());			
 					}	
 					currResp = new ServerResponse(ResponseType.SUCCESS);				
 				}
