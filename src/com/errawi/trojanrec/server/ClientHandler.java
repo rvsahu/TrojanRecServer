@@ -234,7 +234,7 @@ public class ClientHandler extends Thread {
 						dbHandler.addToWaitlist(currReq.getReservation(), currReq.getUser());			
 					}
 					else {
-						System.out.println("Make bookings bad"); //TODO: log this to a file
+						System.out.println("Make bookings bad, waitlist instead"); //TODO: log this to a file
 						// make booking
 						dbHandler.makeBooking(currReq.getReservation(), currReq.getUser());			
 					}	
