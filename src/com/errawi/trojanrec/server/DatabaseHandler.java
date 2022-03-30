@@ -61,7 +61,7 @@ public class DatabaseHandler {
             return false;
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -77,7 +77,7 @@ public class DatabaseHandler {
                 //datasource.close();
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
         return false;
@@ -110,7 +110,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             user = null;
         }
         finally {
@@ -126,7 +126,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 user = null;
             }
         }
@@ -161,7 +161,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             user = null;
         }
         finally {
@@ -177,7 +177,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 user = null;
             }
         }
@@ -201,12 +201,12 @@ public class DatabaseHandler {
                 return true;
             }
             // no user was present in ResultSet, reservation does not exist
-            log.info("Reservation does not exist");
+            System.out.println("Reservation does not exist");
             return false;
             
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -222,7 +222,7 @@ public class DatabaseHandler {
                 //datasource.close();
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
         return false;
@@ -255,7 +255,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             timeslots = null;
         }
         finally {
@@ -271,7 +271,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 timeslots = null;
             }
         }
@@ -286,32 +286,38 @@ public class DatabaseHandler {
      *
      */
     public synchronized boolean isCapMax(Reservation reservation) { 
-    	
+    	System.out.println("isCapMax: checking res");
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		log.info("Reservation does not exist");
+    		System.out.println("Reservation does not exist");
     		return false;
     	}
-
+    	System.out.println("isCapMax: res exists");
         try {
+        	System.out.println("isCapMax: making connection");
             conn = datasource.getConnection();
-
+            System.out.println("isCapMax: preparing statement");
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
                     		+ "FROM trojanrec.timeslot "
                     		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
+            System.out.println("isCapMax: getting results");
             ResultSet rs = pst.executeQuery();
-
+            System.out.println("isCapMax: results gotten");
             int max = -1;
             int curr = -1;
-
+            System.out.println("isCapMax: checking results");
             if(rs.next()){
+            	System.out.println("isCapMax: results exist");
                 max = rs.getInt("cap_max");
                 //System.out.println(max);
                 curr = rs.getInt("cap_curr");
                 //System.out.println(curr);
+            } else {
+            	System.out.println("isCapMax: no results");
             }
             if(max == curr){
+            	System.out.println("isCapMax: returning at max == curr (true)");
                 return true;
             }
             if((max == -1) || (curr == -1)){
@@ -319,10 +325,11 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
+            	System.out.println("isCapMax: closing rs, pst, con");
                 if(rs != null){
                     rs.close();
                 }
@@ -334,9 +341,10 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
+        System.out.println("isCapMax: shouldn't be here, bad");
         return false;
     }
 
@@ -351,7 +359,7 @@ public class DatabaseHandler {
     	
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		log.info("Reservation does not exist");
+    		System.out.println("Reservation does not exist");
     		return;
     	}
     	
@@ -395,14 +403,14 @@ public class DatabaseHandler {
                         stmt.executeUpdate(sql);                	
                     }
                     else {
-                    	log.info("A user tried to make a duplicate waitlist booking - this is not allowed! No futher action is necessary :-)");
+                    	System.out.println("A user tried to make a duplicate waitlist booking - this is not allowed! No futher action is necessary :-)");
                     }   
 
                 }
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -417,7 +425,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
     }
@@ -432,7 +440,7 @@ public class DatabaseHandler {
     	
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		log.info("Reservation does not exist");
+    		System.out.println("Reservation does not exist");
     		return;
     	}
     	
@@ -491,13 +499,13 @@ public class DatabaseHandler {
                             
                         }
                         else {
-                        	log.info("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
+                        	System.out.println("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
                         }                  
                     }             
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -512,7 +520,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
     }
@@ -527,7 +535,7 @@ public class DatabaseHandler {
 
 	   boolean exists = reservationExists(reservation);
 	   if(!exists) {
-   		   log.info("Reservation does not exist");
+   		   System.out.println("Reservation does not exist");
    		   return;
 	   }
    	
@@ -589,13 +597,13 @@ public class DatabaseHandler {
                            
                        }
                        else {
-                       	log.info("A user tried to remove a booking, but they didn't have a booking - this is not allowed! No futher action is necessary :-)");
+                       	System.out.println("A user tried to remove a booking, but they didn't have a booking - this is not allowed! No futher action is necessary :-)");
                        }                  
                    }             
            }
        }
        catch(SQLException e) {
-           log.info("SQLException Message: " + e.getMessage());
+           System.out.println("SQLException Message: " + e.getMessage());
        }
        finally {
            try{
@@ -610,7 +618,7 @@ public class DatabaseHandler {
                }
            }
            catch(SQLException e){
-               log.info("SQLException Message: " + e.getMessage());
+               System.out.println("SQLException Message: " + e.getMessage());
            }
        }
 	   
@@ -664,7 +672,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             bookings = null;
         }
         finally {
@@ -680,7 +688,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 bookings = null;
             }
         }
@@ -736,7 +744,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             bookings = null;
         }
         finally {
@@ -752,7 +760,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 bookings = null;
             }
         }
@@ -790,7 +798,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             e.printStackTrace();
             waitlist_reservations = null;
         }
@@ -807,7 +815,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 e.printStackTrace();
                 waitlist_reservations = null;
             }
@@ -836,7 +844,7 @@ public class DatabaseHandler {
         
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		log.info("Reservation does not exist");
+    		System.out.println("Reservation does not exist");
     		users = null;
     		return users;
     	}
@@ -870,7 +878,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
             e.printStackTrace();
             users = null;
         }
@@ -887,7 +895,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
                 e.printStackTrace();
                 users = null;
             }
@@ -907,7 +915,7 @@ public class DatabaseHandler {
     	
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		log.info("Reservation does not exist");
+    		System.out.println("Reservation does not exist");
     		return;
     	}
     	
@@ -929,7 +937,7 @@ public class DatabaseHandler {
             }
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -944,7 +952,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
     }
@@ -970,7 +978,7 @@ public class DatabaseHandler {
             stmt.executeUpdate(sql);
         }
         catch(SQLException e) {
-            log.info("SQLException Message: " + e.getMessage());
+            System.out.println("SQLException Message: " + e.getMessage());
         }
         finally {
             try{
@@ -985,7 +993,7 @@ public class DatabaseHandler {
                 }
             }
             catch(SQLException e){
-                log.info("SQLException Message: " + e.getMessage());
+                System.out.println("SQLException Message: " + e.getMessage());
             }
         }
     	

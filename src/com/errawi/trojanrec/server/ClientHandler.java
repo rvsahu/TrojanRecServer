@@ -232,6 +232,7 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					boolean max_cap = dbHandler.isCapMax(currReq.getReservation());
+					System.out.println("is cap max done");
 					if(max_cap) {
 						System.out.println("Make bookings bad, waitlist instead"); //TODO: log this to a file
 						// add user to wait list because the bookings are full for that reservation time
