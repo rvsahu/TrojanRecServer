@@ -49,7 +49,7 @@ public class ClientHandler extends Thread {
 	 */
 	private boolean userAuthenticated;
 	
-	/**
+    /**
      * Enumerates the functions that the server could need to perform for the client
      */
     private enum ServerFunction {
@@ -57,8 +57,6 @@ public class ClientHandler extends Thread {
         GET_PREVIOUS_BOOKINGS, GET_WAIT_LIST, GET_CENTRE_TIME_SLOTS, MAKE_BOOKING,
         CANCEL_BOOKING, CANCEL_WAIT_LIST, POLL_FOR_NOTIFICATIONS, CLOSE
     }
-    
-    //TODO: poll for notifications, cancel_wait_list
 
     /**
      * Enumerates conditions with which the server could respond to the
@@ -88,8 +86,10 @@ public class ClientHandler extends Thread {
 
         /**
          * String containing the user password, for login requests.
+         *
+         * TODO: determine how to store this in an encrypted fashion
          */
-        private String userPassword;
+        private static String userPassword;
 
         /**
          * Integer id representing the recreation centre that is being sent to the server.
@@ -97,13 +97,13 @@ public class ClientHandler extends Thread {
          * and likewise for the wait list.
          */
         private int recCentre;
-        
+
         /**
          * ArrayList of reservation times/dates for retrieving past and future bookings.
          */
         private ArrayList<Reservation> bookings;
-        
-        
+
+
         /**
          * Reservation object with timedate and center for the reservation.
          * useful for creating a booking, retrieving waitlist for specific reservation
@@ -115,7 +115,7 @@ public class ClientHandler extends Thread {
          * defined by the recCentre field). This would be used by the server in the cases of
          * making a booking, cancelling one, and likewise for the wait list.
          */
-        private String timeslot;    
+        private String timeslot;
 
         public ClientRequest(ServerFunction function) {
             this.function = function;
@@ -136,15 +136,15 @@ public class ClientHandler extends Thread {
         public void setTimeslot(String timeslot) {
             this.timeslot = timeslot;
         }
-        
+
         public void setBookings(ArrayList<Reservation> bookings) {
-        	this.bookings = bookings;
+            this.bookings = bookings;
         }
-        
+
         public void setReservation(Reservation reservation) {
-        	this.reservation = reservation;
+            this.reservation = reservation;
         }
-        
+
         public ServerFunction getFunction() {
             return function;
         }
@@ -164,13 +164,13 @@ public class ClientHandler extends Thread {
         public String getTimeslot() {
             return timeslot;
         }
-        
+
         public ArrayList<Reservation> getBookings() {
-        	return bookings;
+            return bookings;
         }
-        
+
         public Reservation getReservation() {
-        	return reservation;
+            return reservation;
         }
     }
 
@@ -180,9 +180,9 @@ public class ClientHandler extends Thread {
         private ResponseType responseType;
 
         private User user;
-        
-        private ArrayList<Reservation> bookings;     
-        
+
+        private ArrayList<Reservation> bookings;
+
         private ArrayList<String> timeslots;
 
         public ServerResponse(ResponseType responseType) {
@@ -204,21 +204,21 @@ public class ClientHandler extends Thread {
         public User getUser() {
             return user;
         }
-        
+
         public void setBookings(ArrayList<Reservation> bookings) {
-        	this.bookings = bookings;
+            this.bookings = bookings;
         }
-        
+
         public ArrayList<Reservation> getBookings() {
-        	return bookings;
+            return bookings;
         }
 
         public void setTimeslots(ArrayList<String> timeslots) {
-        	this.timeslots = timeslots;
+            this.timeslots = timeslots;
         }
-        
+
         public ArrayList<String> getTimeslots() {
-        	return timeslots;
+            return timeslots;
         }
     }
 	
