@@ -9,6 +9,7 @@ import com.errawi.trojanrec.utils.ServerFunction;
 import com.errawi.trojanrec.utils.ServerResponse;
 import com.errawi.trojanrec.utils.User;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -24,7 +25,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 
 /**
- * A class to test the outputs of 
+ * A class to test the outputs of ClientHandler and each of the requests it may get
  * 
  * @author RSahu
  */
@@ -39,12 +40,21 @@ public class TestClientHandler {
      */
     private ObjectInputStream testOIS;
 	
+    /**
+     * Socket which streams are created from and connects to the server
+     */
 	private Socket testSocket;
 	
 	/**
 	 * Need a copy of this to be able to clear bookings table and wait list once done with a test group
 	 */
 	private static DatabaseHandler testDBH;
+	
+	
+	/**
+	 * Whether the socket is closed properly or not.
+	 */
+	private boolean goodClosed;
 	
 	/**
 	 * Creates a database handler that we can use to clear tables between each test
@@ -80,6 +90,7 @@ public class TestClientHandler {
 		ClientRequest connectUser = new ClientRequest(ServerFunction.CONNECT);
 		ServerResponse response = sendRequest(connectUser);
 		assertEquals("Response from server upon connection", response.responseType(), ResponseType.CONNECTED);
+		goodClosed = false;
 	}
 	
 	/**
@@ -90,6 +101,30 @@ public class TestClientHandler {
 	private ServerResponse sendRequest(ClientRequest request) throws IOException, ClassNotFoundException {
 		testOOS.writeObject(request);
 		return (ServerResponse)(testOIS.readObject());
+	}
+	
+	/**
+	 * Clears database of bookings and wait list entries one last time.
+	 */
+	@AfterClass public static void clearDatabase() {
+		testDBH.clearBookingsWaitlistsTables();
+	}
+	
+	/**
+	 * Closes the socket connection to the server appropriately, called after each test
+	 */
+	@After public void closeConnection() throws ClassNotFoundException, SocketException, IOException {
+		if (testSocket.isClosed()) {
+			if (goodClosed) {
+				return; //don't do anything if connection was already closed and *should be*
+			} else {
+				throw new SocketException("Socket closed when it shouldn't be.");
+			}
+		}
+		ClientRequest closeRequest = new ClientRequest(ServerFunction.CLOSE);
+		assertEquals("Response from server upon closing connection", sendRequest(closeRequest).responseType(), ResponseType.CLOSED);
+		testSocket.close();
+		goodClosed = true;
 	}
 	
 	/**
@@ -129,17 +164,12 @@ public class TestClientHandler {
 	 */
 	private boolean testLogin(User user, String userPassword) throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
 		connect(); //connect to server
+		//build login request
 		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
 		loginRequest.setUser(user);
 		loginRequest.setUserPassword(userPassword);
-		ServerResponse response = sendRequest(loginRequest);
-		return response.responseType() == ResponseType.AUTHENTICATED;
-	}
-	
-	/**
-	 * Clears database of bookings and wait list entries one last time.
-	 */
-	@AfterClass public static void clearDatabase() {
-		testDBH.clearBookingsWaitlistsTables();
+		ServerResponse response = sendRequest(loginRequest); //send login request and get response
+		closeConnection(); //close server connection
+		return response.responseType() == ResponseType.AUTHENTICATED; //check response is AUTHENTICATED
 	}
 }
