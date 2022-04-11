@@ -972,16 +972,20 @@ public class DatabaseHandler {
     
     /**
     *
-    * clears the entire bookings table - for testing suite purposes
+    * clears the entire bookings and waitlists tables - for testing suite purposes
     * also makes all curr capacities be 0 in timeslot table
     *
     */
-    public synchronized void clearBookingsTable() {
+    public synchronized void clearBookingsWaitlistsTables() {
         try {
             conn = datasource.getConnection();
             
             String sql = "DELETE FROM trojanrec.booking";
             Statement stmt = conn.createStatement();
+            stmt.executeUpdate(sql);
+            
+            sql = "DELETE FROM trojanrec.waitlist";
+            stmt = conn.createStatement();
             stmt.executeUpdate(sql);
             
             sql = "UPDATE trojanrec.timeslot "
