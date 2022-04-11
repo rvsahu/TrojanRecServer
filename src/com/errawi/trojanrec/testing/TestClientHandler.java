@@ -44,12 +44,12 @@ public class TestClientHandler {
 	/**
 	 * Need a copy of this to be able to clear bookings table and wait list once done with a test group
 	 */
-	private DatabaseHandler testDBH;
+	private static DatabaseHandler testDBH;
 	
 	/**
 	 * Creates a database handler that we can use to clear tables between each test
 	 */
-	@BeforeClass public void setUpDatabase() {
+	@BeforeClass public static void setUpDatabase() {
 		testDBH = new DatabaseHandler();
 	}
 	
@@ -139,7 +139,7 @@ public class TestClientHandler {
 	/**
 	 * Clears database of bookings and wait list entries one last time.
 	 */
-	@AfterClass public void clearDatabase() {
+	@AfterClass public static void clearDatabase() {
 		testDBH.clearBookingsWaitlistsTables();
 	}
 }
