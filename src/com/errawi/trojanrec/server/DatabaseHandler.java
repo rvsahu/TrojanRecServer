@@ -286,7 +286,7 @@ public class DatabaseHandler {
      *
      */
     public synchronized boolean isCapMax(Reservation reservation) { 
-    	System.out.println("isCapMax: checking res");
+
     	/*
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
@@ -294,26 +294,20 @@ public class DatabaseHandler {
     		return false;
     	}
     	*/
-    	System.out.println("isCapMax: res exists");
+
         try {
         	
         	
         	
-        	System.out.println("isCapMax: making connection");
             conn = datasource.getConnection();
-            System.out.println("isCapMax: preparing statement");
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
                     		+ "FROM trojanrec.timeslot "
                     		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
-            System.out.println("isCapMax: getting results");
             ResultSet rs = pst.executeQuery();
-            System.out.println("isCapMax: results gotten");
             int max = -1;
             int curr = -1;
-            System.out.println("isCapMax: checking results");
             if(rs.next()){
-            	System.out.println("isCapMax: results exist");
                 max = rs.getInt("cap_max");
                 //System.out.println(max);
                 curr = rs.getInt("cap_curr");
@@ -322,7 +316,7 @@ public class DatabaseHandler {
             	System.out.println("isCapMax: no results");
             }
             if(max == curr){
-            	System.out.println("isCapMax: returning at max == curr (true)");
+            	//System.out.println("isCapMax: returning at max == curr (true)");
                 return true;
             }
             if((max == -1) || (curr == -1)){
@@ -334,29 +328,21 @@ public class DatabaseHandler {
         }
         finally {
             try{
-            	System.out.println("isCapMax: closing rs, pst, con");
                 if(rs != null){
-                	System.out.println("isCapMax: closing rs");
                     rs.close();
-                    System.out.println("isCapMax: rs closed");
                 }
                 
                 if(pst != null){
-                	System.out.println("isCapMax: closing pst");
                     pst.close();
-                    System.out.println("isCapMax: pst closed");
                 }
                 if(conn != null){
-                	System.out.println("isCapMax: closing conn");
                     conn.close();
-                    System.out.println("isCapMax: conn closed");
                 }
             }
             catch(SQLException e){
                 System.out.println("SQLException Message: " + e.getMessage());
             }
         }
-        System.out.println("isCapMax: shouldn't be here, bad");
         return false;
     }
 
@@ -704,7 +690,6 @@ public class DatabaseHandler {
                 bookings = null;
             }
         }
-        System.out.println(bookings.size());
         return bookings;
     }
 
@@ -776,7 +761,6 @@ public class DatabaseHandler {
                 bookings = null;
             }
         }
-        System.out.println(bookings.size());
         return bookings;
     }
     
@@ -784,30 +768,38 @@ public class DatabaseHandler {
     	
     	ArrayList<Reservation> waitlist_reservations = new ArrayList<>();
 
-        PreparedStatement pst_j;
-        ResultSet rs_j;
-
         try {
             conn = datasource.getConnection();
-
-            PreparedStatement pst = conn.prepareStatement("SELECT timeslot_id "
-            		+ "FROM trojanrec.waitlist "
-            		+ "WHERE user_id = '" + rs.getInt("user_id") + "'");
+            
+            PreparedStatement pst = conn.prepareStatement("SELECT user_id "
+            		+ "FROM trojanrec.userinfo "
+            		+ "WHERE name = '" + user.getName() + "'");
             ResultSet rs = pst.executeQuery();
             
-            while(rs.next()) {
-            	pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
-            			+ "FROM trojanrec.timeslot "
-            			+ "WHERE timeslot_id = '" + rs.getInt("timeslot_id"));
-            	rs_j = pst_j.executeQuery();
+            if(rs.next()) {
+
+                PreparedStatement pstt = conn.prepareStatement("SELECT timeslot_id "
+                		+ "FROM trojanrec.waitlist "
+                		+ "WHERE user_id = '" + rs.getInt("user_id") + "'");
+                ResultSet rss = pstt.executeQuery();
+
+                while(rss.next()) {
+                	PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
+                			+ "FROM trojanrec.timeslot "
+                			+ "WHERE timeslot_id = '" + rss.getInt("timeslot_id") + "'");
+                	ResultSet rs_j = pst_j.executeQuery();
+                	
+                	if(rs_j.next()) {
+                    	Reservation reservation = new Reservation();
+                    	reservation.setRecCentre(rs_j.getInt("center_id"));
+                    	reservation.setTimedate(rs_j.getString("reservation_time"));
+                        waitlist_reservations.add(reservation);
+                	}
+                }
             	
-            	if(rs_j.next()) {
-                	Reservation reservation = new Reservation();
-                	reservation.setRecCentre(rs_j.getInt("center_id"));
-                	reservation.setTimedate(rs_j.getString("reservation_time"));
-                    waitlist_reservations.add(reservation);
-            	}
             }
+            
+
         }
         catch(SQLException e) {
             System.out.println("SQLException Message: " + e.getMessage());
@@ -832,7 +824,6 @@ public class DatabaseHandler {
                 waitlist_reservations = null;
             }
         }
-        System.out.println(waitlist_reservations.size());
         return waitlist_reservations;   	
     }
 
