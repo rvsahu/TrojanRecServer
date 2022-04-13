@@ -1,6 +1,13 @@
 package com.errawi.trojanrec.testing;
 
 import org.junit.Test;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
@@ -9,13 +16,6 @@ import com.errawi.trojanrec.utils.ServerFunction;
 import com.errawi.trojanrec.utils.ServerResponse;
 import com.errawi.trojanrec.utils.User;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -66,7 +66,7 @@ public class TestClientHandler {
 	/**
 	 * Sets up a new connection to the 'server' 
 	 */
-	@Before public void clearDBAndConnect() throws SocketException, UnknownHostException, IOException, ClassNotFoundException {
+	@BeforeEach public void clearDBAndConnect() throws SocketException, UnknownHostException, IOException, ClassNotFoundException {
 		//clears DB of tables
 		clearDB();
 		//establishes a connection and creates input and output streams
@@ -113,7 +113,7 @@ public class TestClientHandler {
 	/**
 	 * Closes the socket connection to the server appropriately, called after each test
 	 */
-	@After public void closeConnection() throws ClassNotFoundException, SocketException, IOException {
+	@AfterEach public void closeConnection() throws ClassNotFoundException, SocketException, IOException {
 		if (testSocket.isClosed()) {
 			if (goodClosed) {
 				return; //don't do anything if connection was already closed and *should be*
@@ -171,5 +171,28 @@ public class TestClientHandler {
 		ServerResponse response = sendRequest(loginRequest); //send login request and get response
 		closeConnection(); //close server connection
 		return response.responseType() == ResponseType.AUTHENTICATED; //check response is AUTHENTICATED
+	}
+	
+	/**
+	 * Tests retrieval of user information for two separate users through two separate connections
+	 * 
+	 * TODO: add test annotation.
+	 */
+	public void testUserInfo() {
+		User will = new User("willw");
+		String willPassword = "3456";
+		User moshe = new User("mosheheletz");
+		String moshePassword = "7890";
+		
+	}
+	
+	/**
+	 * Tests retrieval of user information for two separate users simultaneously
+	 */
+	public void testConcurrentUserInfo() {
+		User khanh = new User("khanhpham");
+		String khanhPassword = "2345";
+		User avonlea = new User("avonleav");
+		String avonleaPassword = "6543";
 	}
 }
