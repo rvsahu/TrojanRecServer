@@ -127,6 +127,13 @@ public class ClientHandler extends Thread {
 						oos.writeObject(currResp);
 						continue;
 					}
+					//check user is non-null
+					if (currReq.getUser() == null) {
+						//user is null, send UNAUTHENTICATED response
+						System.out.println("Login bad - null user"); //TODO: log this to a file
+						sendUnauthenticatedResponse();
+						continue;
+					}
 					//authenticate user
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
 					//check if successful or not
