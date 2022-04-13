@@ -119,7 +119,7 @@ public class TestClientHandler {
 	 * Clears database of bookings and wait list entries one last time.
 	 */
 	@AfterAll public static void clearDatabase() {
-		testDBH.clearBookingsWaitlistsTables();
+		testDBH.clearBookingsWaitlistsTables(); //clear database
 	}
 	
 	/**
@@ -229,25 +229,54 @@ public class TestClientHandler {
 	}
 	
 	/**
-	 * Tests retrieval of user information for two separate users through two separate connections
+	 * Tests retrieval of user information for separate users through separate connections.
 	 * 
-	 * TODO: add test annotation.
 	 */
-	public void testUserInfo() {
-		User will = new User("willw");
-		String willPassword = "3456";
-		User moshe = new User("mosheheletz");
-		String moshePassword = "7890";
-		
+	@ParameterizedTest
+	@MethodSource("testUserInfoUsers")
+	public void testUserInfo(User testUser, String userPassword, User userExpected) throws ClassNotFoundException, IOException {
+		//build login request with testUser
+		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
+		loginRequest.setUser(testUser);
+		loginRequest.setUserPassword(userPassword);
+		//send login request
+		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
+		//check response (really this should be good because the two users we're using we just tested)
+		//but we'll do the assert anyway
+		assertEquals("testUserInfo: login of " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
+		//build profile info request with testUser
+		ClientRequest infoRequest = new ClientRequest(ServerFunction.GET_PROFILE_INFO);
+		infoRequest.setUser(testUser);
+		//send info request, save server response
+		ServerResponse infoResponse = sendRequest(infoRequest);
+		//check response type is what's expected (SUCCESSFUL)
+		assertEquals("testUserInfo: info getting operation of "+ testUser.getNetID(), infoResponse.responseType(), ResponseType.SUCCESS); //check response is SUCCESS
+		//get resulting user from infoResponse
+		User userResult = infoResponse.getUser();
+		//check userResult details against userExpected
+		assertEquals("testUserInfo: user name: ", userExpected.getName(), userResult.getName());
+		assertEquals("testUserInfo: net ID: ", userExpected.getNetID(), userResult.getNetID());
+		assertEquals("testUserInfo: student ID: ", userExpected.getStudentID(), userResult.getStudentID());
+		assertEquals("testUserInfo: user photo: ", userExpected.getUserPhoto(), userResult.getUserPhoto());
 	}
 	
-	/**
-	 * Tests retrieval of user information for two separate users simultaneously
-	 */
-	public void testConcurrentUserInfo() {
-		User khanh = new User("khanhpham");
-		String khanhPassword = "2345";
-		User avonlea = new User("avonleav");
-		String avonleaPassword = "6543";
+	
+	private static Stream<Arguments> testUserInfoUsers() {
+		User will = new User("willw");
+		User moshe = new User("mosheheletz");
+		
+		User willExpected = new User("willw");
+		willExpected.setName("Will Wei");
+		willExpected.setStudentID(3000000003L);
+		willExpected.setUserPhoto("will");
+		User mosheExpected = new User("mosheheletz");
+		mosheExpected.setName("Moshe Heletz");
+		mosheExpected.setStudentID(4000000004L);
+		mosheExpected.setUserPhoto("moshe");
+		
+		return Stream.of(
+				Arguments.of(will, "3456", willExpected),
+				Arguments.of(moshe, "7890", mosheExpected)
+				);
 	}
 }
