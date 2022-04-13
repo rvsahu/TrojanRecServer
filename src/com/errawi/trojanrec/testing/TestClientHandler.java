@@ -1,7 +1,11 @@
 package com.errawi.trojanrec.testing;
 
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
@@ -23,6 +27,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.stream.Stream;
 
 /**
  * A class to test the outputs of ClientHandler and each of the requests it may get
@@ -55,6 +60,13 @@ public class TestClientHandler {
 	 * Whether the socket is closed properly or not.
 	 */
 	private boolean goodClosed;
+	
+	/**
+	 * Constructor for tester
+	 */
+	public TestClientHandler() throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
+		clearDBAndConnect();
+	}
 	
 	/**
 	 * Creates a database handler that we can use to clear tables between each test
@@ -129,7 +141,7 @@ public class TestClientHandler {
 	
 	/**
 	 * Test each login works with specified usernames and passwords
-	 */
+	 * Commented out for now because trying a parameterized test to do this instead.
 	@Test public void testLogins() throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
 		//declare test instances of users in db
 		User erin = new User("erinbris");
@@ -158,19 +170,62 @@ public class TestClientHandler {
 		assertTrue("Testing login for khanh", testLogin(khanh, khanhPassword));
 		assertTrue("Testing login for avonlea", testLogin(avonlea, avonleaPassword));
 	}
+	*/
 	
 	/**
 	 * Test a specific login 
 	 */
-	private boolean testLogin(User user, String userPassword) throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
-		connect(); //connect to server
+	@ParameterizedTest
+	@MethodSource("testLoginUsers")
+	@Timeout(1)
+	public void testLogins(User user, String userPassword, ResponseType expected) throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
 		//build login request
 		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
 		loginRequest.setUser(user);
 		loginRequest.setUserPassword(userPassword);
 		ServerResponse response = sendRequest(loginRequest); //send login request and get response
-		closeConnection(); //close server connection
-		return response.responseType() == ResponseType.AUTHENTICATED; //check response is AUTHENTICATED
+		String userNetID;
+		if (user != null) {
+			userNetID = user.getNetID();
+		} else {
+			userNetID = "null user object";
+		}
+		assertEquals("Testing login for " + userNetID, response.responseType(), expected); //check response is AUTHENTICATED
+	}
+	
+	private static Stream<Arguments> testLoginUsers() {
+		User erin = new User("erinbris");
+		User rahul = new User("rahuls");
+		User will = new User("willw");
+		User moshe = new User("mosheheletz");
+		User karan = new User("karanm");
+		User shreya = new User("shreyac");
+		User khanh = new User("khanhpham");
+		User avonlea = new User("avonleav");
+		User fake = new User("fakeguy");
+		User nullid = new User(null);
+		
+		return Stream.of(
+				//good users
+				Arguments.of(erin, "1234", ResponseType.AUTHENTICATED),
+				Arguments.of(rahul, "4321", ResponseType.AUTHENTICATED),
+				Arguments.of(will, "3456", ResponseType.AUTHENTICATED),
+				Arguments.of(moshe, "7890", ResponseType.AUTHENTICATED),
+				Arguments.of(karan, "9876", ResponseType.AUTHENTICATED),
+				Arguments.of(shreya, "7654", ResponseType.AUTHENTICATED),
+				Arguments.of(khanh, "2345", ResponseType.AUTHENTICATED),
+				Arguments.of(avonlea, "6543", ResponseType.AUTHENTICATED),
+				//existing user with bad password
+				Arguments.of(avonlea, "1111", ResponseType.UNAUTHENTICATED),
+				//existing user with password of another user
+				Arguments.of(moshe, "4321", ResponseType.UNAUTHENTICATED),
+				//non-extant user with real user's password
+				Arguments.of(fake, "1234", ResponseType.UNAUTHENTICATED),
+				//null user id
+				Arguments.of(nullid, "1234", ResponseType.UNAUTHENTICATED),
+				//null user
+				Arguments.of(null, "1234", ResponseType.UNAUTHENTICATED)
+				);
 	}
 	
 	/**
