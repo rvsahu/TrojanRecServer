@@ -1,10 +1,10 @@
 package com.errawi.trojanrec.testing;
 
 import org.junit.Test;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +59,7 @@ public class TestClientHandler {
 	/**
 	 * Creates a database handler that we can use to clear tables between each test
 	 */
-	@BeforeClass public static void setUpDatabase() {
+	@BeforeAll public static void setUpDatabase() {
 		testDBH = new DatabaseHandler();
 	}
 	
@@ -106,7 +106,7 @@ public class TestClientHandler {
 	/**
 	 * Clears database of bookings and wait list entries one last time.
 	 */
-	@AfterClass public static void clearDatabase() {
+	@AfterAll public static void clearDatabase() {
 		testDBH.clearBookingsWaitlistsTables();
 	}
 	
