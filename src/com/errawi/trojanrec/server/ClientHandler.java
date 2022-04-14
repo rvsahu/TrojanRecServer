@@ -230,7 +230,7 @@ public class ClientHandler extends Thread {
 				}
 				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
 					System.out.println("Get slots attempt"); //TODO: log this to a file
-					ArrayList<String> timeslots = dbHandler.getCenterTimeslots(currReq.getRecCentre());
+					ArrayList<String> timeslots = dbHandler.getFutureCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
 						System.out.println(id + " - Get slots good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
