@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 import com.errawi.trojanrec.utils.*;
@@ -241,13 +242,13 @@ public class ClientHandler extends Thread {
 					}
 				}
 				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
-					System.out.println("Make booking attempt"); //TODO: log this to a file
+					System.out.print("Make booking attempt "); //TODO: log this to a file
 					//TODO: modify client side code to send a reservation rather than construct one here
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
-					System.out.println("res rec centre: " + res.getRecCentre());
-					System.out.println("res time slot: " + res.getTimedate());
+					System.out.print("centre: " + res.getRecCentre());
+					System.out.println(", time slot: " + res.getTimedate());
 					boolean max_cap = dbHandler.isCapMax(res);
 					boolean success = false;
 					if(max_cap) {
@@ -255,11 +256,15 @@ public class ClientHandler extends Thread {
 						// add user to wait list because the bookings are full for that reservation time
 						dbHandler.addToWaitlist(res, currReq.getUser());
 						success = true;
-					}
-					else {
-						System.out.println(id + " - Make bookings good"); //TODO: log this to a file
+					} else {
 						// make booking
 						success = dbHandler.makeBooking(res, currReq.getUser());
+						System.out.print(id + " - Make bookings "); //TODO: log this to a file
+						if (success) {
+							System.out.println("good");
+						} else {
+							System.out.println("bad");
+						}
 					}	
 					if (!success) {
 						sendFailResponse();
@@ -292,6 +297,9 @@ public class ClientHandler extends Thread {
 			} catch (EOFException eofe) {
 				System.out.println(id + " - Client disconnected"); //TODO: log this to a file
 				//eofe.printStackTrace();
+				return;
+			} catch (SocketException se) {
+				System.out.println(id + " - connection reset"); //TODO log to a file
 				return;
 			} catch (IOException ioe) {
 				//some error reading from input stream. errors sending back would be handled
