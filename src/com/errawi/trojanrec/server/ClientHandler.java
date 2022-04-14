@@ -355,7 +355,7 @@ public class ClientHandler extends Thread {
 	 * @return     True if a FAIL response was sent successfully, false otherwise.
 	 */
 	private boolean sendFailResponse() {
-		ServerResponse response = new ServerResponse(ResponseType.CLOSED);
+		ServerResponse response = new ServerResponse(ResponseType.FAIL);
 		try {
 			oos.writeObject(response); //send FAIL response
 			return true;
