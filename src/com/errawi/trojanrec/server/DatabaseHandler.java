@@ -534,7 +534,6 @@ public class DatabaseHandler {
                         if(rs_j.next()) {
                         	booking_made = rs_j.getInt(1);
                         }                                            
-                        System.out.println("booking made value: " + booking_made);
                         // user doesn't have booking yet
                         if(booking_made == 0) {                                                 
                             String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) "
@@ -552,8 +551,6 @@ public class DatabaseHandler {
                         else {
                         	System.out.println("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
                         }                  
-                    } else {
-                    	System.out.println("doesn't enter next() block");
                     }
             }
         }
@@ -687,11 +684,11 @@ public class DatabaseHandler {
      *
      */
     public synchronized ArrayList<Reservation> getFutureBookings(User user) {
-               
-        if(user.getStudentID() == -1) {
-        	return null;
-        }
         
+    	if (user == null || user.getNetID() == null) {
+    		return null;
+    	}
+    	
         ArrayList<Reservation> bookings = new ArrayList<>();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -764,9 +761,9 @@ public class DatabaseHandler {
      */
     public synchronized ArrayList<Reservation> getPastBookings(User user) {
     	
-        if(user.getStudentID() == -1) {
-        	return null;
-        }
+    	if (user == null || user.getNetID() == null) {
+    		return null;
+    	}
         
         ArrayList<Reservation> bookings = new ArrayList<>();
 
@@ -833,9 +830,9 @@ public class DatabaseHandler {
     
     public synchronized ArrayList<Reservation> getWaitlistForUser(User user) {
     	
-        if(user.getStudentID() == -1) {
-        	return null;
-        }
+    	if (user == null || user.getNetID() == null) {
+    		return null;
+    	}
     	
     	ArrayList<Reservation> waitlist_reservations = new ArrayList<>();
 
