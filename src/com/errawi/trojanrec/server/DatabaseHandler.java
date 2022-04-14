@@ -377,7 +377,7 @@ public class DatabaseHandler {
                 int timeslot_id = rs.getInt("timeslot_id");
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
-                		+ "WHERE name = '" + user.getName() + "'");
+                		+ "WHERE net_id = '" + user.getNetID() + "'");
                 rs_k = pst_k.executeQuery();
                 if(rs_k.next()){
                 	
@@ -461,7 +461,7 @@ public class DatabaseHandler {
                 // fetch user
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
-                		+ "WHERE name = '" + user.getName() + "'");
+                		+ "WHERE net_id = '" + user.getNetID() + "'");
                 rs_k = pst_k.executeQuery();
                 
                 
@@ -561,7 +561,7 @@ public class DatabaseHandler {
                // fetch user
                pst_k = conn.prepareStatement("SELECT user_id "
                		+ "FROM trojanrec.userinfo "
-               		+ "WHERE name = '" + user.getName() + "'");
+               		+ "WHERE net_id = '" + user.getNetID() + "'");
                rs_k = pst_k.executeQuery();
                
                
@@ -647,7 +647,7 @@ public class DatabaseHandler {
 
             PreparedStatement pst = conn.prepareStatement("SELECT user_id "
             		+ "FROM trojanrec.userinfo "
-            		+ "WHERE name = '" + user.getName() + "'");
+            		+ "WHERE net_id = '" + user.getNetID() + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
@@ -723,7 +723,7 @@ public class DatabaseHandler {
 
             PreparedStatement pst = conn.prepareStatement("SELECT user_id "
             		+ "FROM trojanrec.userinfo "
-            		+ "WHERE name = '" + user.getName() + "'");
+            		+ "WHERE net_id = '" + user.getNetID() + "'");
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()){
@@ -789,7 +789,7 @@ public class DatabaseHandler {
             
             PreparedStatement pst = conn.prepareStatement("SELECT user_id "
             		+ "FROM trojanrec.userinfo "
-            		+ "WHERE name = '" + user.getName() + "'");
+            		+ "WHERE net_id = '" + user.getNetID() + "'");
             ResultSet rs = pst.executeQuery();
             
             if(rs.next()) {
