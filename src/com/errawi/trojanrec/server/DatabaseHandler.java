@@ -479,7 +479,7 @@ public class DatabaseHandler {
                         if(rs_j.next()) {
                         	booking_made = rs_j.getInt(1);
                         }                                            
-                        
+                        System.out.println("booking made value: " + booking_made);
                         // user doesn't have booking yet
                         if(booking_made == 0) {                                                 
                             String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) "
@@ -497,7 +497,9 @@ public class DatabaseHandler {
                         else {
                         	System.out.println("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
                         }                  
-                    }             
+                    } else {
+                    	System.out.println("doesn't enter next() block");
+                    }
             }
         }
         catch(SQLException e) {
@@ -518,8 +520,9 @@ public class DatabaseHandler {
             catch(SQLException e){
                 System.out.println("SQLException Message: " + e.getMessage());
             }
-            return successfulBooking;
+            
         }
+        return successfulBooking;
     }
     
     /**
