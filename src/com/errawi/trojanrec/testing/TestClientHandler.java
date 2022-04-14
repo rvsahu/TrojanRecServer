@@ -261,7 +261,7 @@ public class TestClientHandler {
 		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
 		//check login works (this shouldn't be an issue because we tested these users previously)
 		assertEquals("testMakeBooking: login " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
-		//make bookings and check we're getting the successes/failes expected
+		//make bookings and check we're getting the successes/fails expected
 		for (int i = 0; i < userBookings.size(); i += 1) {
 			ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
 			bookingRequest.setUser(testUser);
@@ -275,7 +275,7 @@ public class TestClientHandler {
 		}
 		//check database is populated as it should be
 		List<Reservation> serverBookings = testDBH.getFutureBookings(testUser); //get booking list directly from DB
-		
+		assertEquals("testMakeBooking: lists are equal", userBookings, serverBookings);
 	}
 	
 	private static Stream<Arguments> testMakeBookingArgs() {
