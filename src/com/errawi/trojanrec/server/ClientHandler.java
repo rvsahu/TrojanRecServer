@@ -127,6 +127,13 @@ public class ClientHandler extends Thread {
 						oos.writeObject(currResp);
 						continue;
 					}
+					//check user is non-null
+					if (currReq.getUser() == null) {
+						//user is null, send UNAUTHENTICATED response
+						System.out.println("Login bad - null user"); //TODO: log this to a file
+						sendUnauthenticatedResponse();
+						continue;
+					}
 					//authenticate user
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
 					//check if successful or not
@@ -142,7 +149,8 @@ public class ClientHandler extends Thread {
 					}
 				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
 					System.out.println("Close request"); //TODO: log this to a file
-					sendClosedResponse();
+					sendClosedResponse(); //kill thread once client connection it handles is closed
+					return; //
 				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
 					System.out.println("Check login attempt"); //TODO: log this to a file
 					if (userAuthenticated) {
