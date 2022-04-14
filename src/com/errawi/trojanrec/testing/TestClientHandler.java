@@ -141,39 +141,6 @@ public class TestClientHandler {
 	}
 	
 	/**
-	 * Test each login works with specified usernames and passwords
-	 * Commented out for now because trying a parameterized test to do this instead.
-	@Test public void testLogins() throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
-		//declare test instances of users in db
-		User erin = new User("erinbris");
-		String erinPassword = "1234";
-		User rahul = new User("rahuls");
-		String rahulPassword = "4321";
-		User will = new User("willw");
-		String willPassword = "3456";
-		User moshe = new User("mosheheletz");
-		String moshePassword = "7890";
-		User karan = new User("karanm");
-		String karanPassword = "9876";
-		User shreya = new User("shreyac");
-		String shreyaPassword = "7654";
-		User khanh = new User("khanhpham");
-		String khanhPassword = "2345";
-		User avonlea = new User("avonleav");
-		String avonleaPassword = "6543";
-		
-		assertTrue("Testing login for erin", testLogin(erin, erinPassword));
-		assertTrue("Testing login for rahul", testLogin(rahul, rahulPassword));
-		assertTrue("Testing login for will", testLogin(will, willPassword));
-		assertTrue("Testing login for moshe", testLogin(moshe, moshePassword));
-		assertTrue("Testing login for karan", testLogin(karan, karanPassword));
-		assertTrue("Testing login for shreya", testLogin(shreya, shreyaPassword));
-		assertTrue("Testing login for khanh", testLogin(khanh, khanhPassword));
-		assertTrue("Testing login for avonlea", testLogin(avonlea, avonleaPassword));
-	}
-	*/
-	
-	/**
 	 * Test a specific login 
 	 */
 	@ParameterizedTest
@@ -292,9 +259,9 @@ public class TestClientHandler {
 		loginRequest.setUserPassword(userPassword);
 		//send login request
 		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
-		//check response (really this should be good because the two users we're using we just tested)
-		//but we'll do the assert anyway
+		//check login works (this shouldn't be an issue because we tested these users previously)
 		assertEquals("testMakeBooking: login " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
+		//make bookings and check we're getting the successes/failes expected
 		for (int i = 0; i < userBookings.size(); i += 1) {
 			ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
 			bookingRequest.setUser(testUser);
@@ -306,6 +273,9 @@ public class TestClientHandler {
 			//check response type is what's expected (SUCCESSFUL)
 			assertEquals("testMakeBooking: make booking " + testUser.getNetID(), opResponses.get(i), bookingResponse.responseType()); //check response is SUCCESS
 		}
+		//check database is populated as it should be
+		List<Reservation> serverBookings = testDBH.getFutureBookings(testUser); //get booking list directly from DB
+		
 	}
 	
 	private static Stream<Arguments> testMakeBookingArgs() {
@@ -324,7 +294,7 @@ public class TestClientHandler {
 		shreyaBookings.add(sb_2);
 		shreyaBookings.add(sb_3);
 		//create expected operation response list
-		List<ResponseType> shreyaResponses = new ArrayList();
+		List<ResponseType> shreyaResponses = new ArrayList<>();
 		shreyaResponses.add(ResponseType.SUCCESS);
 		shreyaResponses.add(ResponseType.SUCCESS);
 		shreyaResponses.add(ResponseType.SUCCESS);
@@ -344,12 +314,21 @@ public class TestClientHandler {
 		
 		//test 3: two bookings at same centre same timeslots
 		//should allow only ONE entry in bookings table
-		List<Reservation> avonleaBookings = new ArrayList<>();
+		//create reservation list
+		Reservation rb_1 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
+		Reservation rb_2 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
+		List<Reservation> avonleaBookings = new ArrayList<>();		
+		avonleaBookings.add(rb_1);
+		avonleaBookings.add(rb_2);
+		//create expected operation response list
+		List<ResponseType> avonleaResponses = new ArrayList<>();
+		avonleaResponses.add(ResponseType.SUCCESS);
+		avonleaResponses.add(ResponseType.FAIL);
 		
 		return Stream.of( 
-				Arguments.of(shreya, "7654", shreyaBookings),
-				Arguments.of(khanh, "2345", 2, khanhBookings),
-				Arguments.of(avonlea, "6543", 3, avonleaBookings)
+				Arguments.of(shreya, "7654", shreyaBookings, shreyaResponses),
+				Arguments.of(khanh, "2345", khanhBookings, khanhResponses),
+				Arguments.of(avonlea, "6543", avonleaBookings, avonleaResponses)
 				);
 	}
 	//TODO: test retrieve bookings
