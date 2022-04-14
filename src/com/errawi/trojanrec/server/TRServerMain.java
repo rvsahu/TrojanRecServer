@@ -65,9 +65,8 @@ public class TRServerMain {
 		System.out.println("Listening for connections..."); //TODO: output this to a log file too
 		while (serverSocket != null) { 
 			try {
-				connections += 1;
 				Socket newSocket = serverSocket.accept();
-				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, connections);
+				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, ++connections);
 				clientHandlers.add(newCH);
 				clientExecutor.submit(newCH); 
 			} catch (IOException ioe) {
