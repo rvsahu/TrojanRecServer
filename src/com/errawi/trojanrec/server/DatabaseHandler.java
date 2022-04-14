@@ -432,14 +432,14 @@ public class DatabaseHandler {
      * @param user       User to add to booking table
      *
      */
-    public synchronized void makeBooking(Reservation reservation, User user) {
+    public synchronized boolean makeBooking(Reservation reservation, User user) {
     	
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
     		System.out.println("Reservation does not exist");
-    		return;
+    		return false;
     	}
-    	
+    	boolean successfulBooking = false;
         try {
             conn = datasource.getConnection();
 
@@ -492,7 +492,7 @@ public class DatabaseHandler {
                             		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                             stmt = conn.createStatement();
                             stmt.executeUpdate(sql);
-                            
+                            successfulBooking = true;
                         }
                         else {
                         	System.out.println("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
@@ -518,6 +518,7 @@ public class DatabaseHandler {
             catch(SQLException e){
                 System.out.println("SQLException Message: " + e.getMessage());
             }
+            return successfulBooking;
         }
     }
     
