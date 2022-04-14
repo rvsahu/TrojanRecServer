@@ -732,7 +732,7 @@ public class DatabaseHandler {
 
                     PreparedStatement pst_j = conn.prepareStatement("SELECT reservation_time, center_id "
                     		+ "FROM trojanrec.timeslot "
-                    		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'");
+                    		+ "WHERE timeslot_id = '" + rs_k.getInt("timeslot_id") + "'"); 
                     ResultSet rs_j = pst_j.executeQuery();
 
                     while(rs_j.next()){
