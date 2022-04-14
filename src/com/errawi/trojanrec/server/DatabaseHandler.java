@@ -201,7 +201,6 @@ public class DatabaseHandler {
                 return true;
             }
             // no user was present in ResultSet, reservation does not exist
-            System.out.println("Reservation does not exist");
             return false;
             
         }
@@ -237,8 +236,12 @@ public class DatabaseHandler {
      */
     public synchronized ArrayList<String> getCenterTimeslots(int center_id){
     	
-    	
+        if(center_id != 1 && center_id != 2 && center_id != 3) {
+        	return null;
+        }
+        
         ArrayList<String> timeslots = new ArrayList<>();
+        
         try {
             conn = datasource.getConnection();
 
@@ -287,18 +290,14 @@ public class DatabaseHandler {
      */
     public synchronized boolean isCapMax(Reservation reservation) { 
 
-    	/*
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		System.out.println("Reservation does not exist");
+    		System.out.println("Reservation does not exist.");
     		return false;
     	}
-    	*/
-
+    	
         try {
-        	
-        	
-        	
+	
             conn = datasource.getConnection();
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT cap_max, cap_curr "
@@ -357,7 +356,6 @@ public class DatabaseHandler {
     	
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		System.out.println("Reservation does not exist");
     		return;
     	}
     	
@@ -630,6 +628,11 @@ public class DatabaseHandler {
      *
      */
     public synchronized ArrayList<Reservation> getFutureBookings(User user) {
+               
+        if(user.getStudentID() == -1) {
+        	return null;
+        }
+        
         ArrayList<Reservation> bookings = new ArrayList<>();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -701,6 +704,11 @@ public class DatabaseHandler {
      *
      */
     public synchronized ArrayList<Reservation> getPastBookings(User user) {
+    	
+        if(user.getStudentID() == -1) {
+        	return null;
+        }
+        
         ArrayList<Reservation> bookings = new ArrayList<>();
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -765,6 +773,10 @@ public class DatabaseHandler {
     }
     
     public synchronized ArrayList<Reservation> getWaitlistForUser(User user) {
+    	
+        if(user.getStudentID() == -1) {
+        	return null;
+        }
     	
     	ArrayList<Reservation> waitlist_reservations = new ArrayList<>();
 
@@ -847,9 +859,7 @@ public class DatabaseHandler {
         
     	boolean exists = reservationExists(reservation);
     	if(!exists) {
-    		System.out.println("Reservation does not exist");
-    		users = null;
-    		return users;
+    		return null;
     	}
 
         try {
