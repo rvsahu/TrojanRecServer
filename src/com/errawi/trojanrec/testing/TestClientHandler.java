@@ -9,7 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
@@ -63,13 +64,6 @@ public class TestClientHandler {
 	private boolean goodClosed;
 	
 	/**
-	 * Constructor for tester
-	 */
-	public TestClientHandler() throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
-		clearDBAndConnect();
-	}
-	
-	/**
 	 * Creates a database handler that we can use to clear tables between each test
 	 */
 	@BeforeAll public static void setUpDatabase() {
@@ -81,7 +75,7 @@ public class TestClientHandler {
 	 */
 	@BeforeEach public void clearDBAndConnect() throws SocketException, UnknownHostException, IOException, ClassNotFoundException {
 		//clears DB of tables
-		clearDB();
+		//clearDB();
 		//establishes a connection and creates input and output streams
 		connect();
 	}
@@ -89,8 +83,12 @@ public class TestClientHandler {
 	/**
 	 * Specifically clears DB bookings table and wait list
 	 */
-	private void clearDB() {
-		testDBH.clearBookingsWaitlistsTables();
+	@AfterAll private static void clearDBStatic() {
+		//testDBH.clearBookingsWaitlistsTables();
+	}
+	
+	@AfterEach private void clearDB() {
+		//testDBH.clearBookingsWaitlistsTables();
 	}
 	
 	/**
@@ -102,7 +100,7 @@ public class TestClientHandler {
 		testOIS = new ObjectInputStream(testSocket.getInputStream());
 		ClientRequest connectUser = new ClientRequest(ServerFunction.CONNECT);
 		ServerResponse response = sendRequest(connectUser);
-		assertEquals("Response from server upon connection", response.responseType(), ResponseType.CONNECTED);
+		assertEquals(response.responseType(), ResponseType.CONNECTED, "bad response from server upon connection");
 		goodClosed = false;
 	}
 	
@@ -117,16 +115,10 @@ public class TestClientHandler {
 	}
 	
 	/**
-	 * Clears database of bookings and wait list entries one last time.
-	 */
-	@AfterAll public static void clearDatabase() {
-		testDBH.clearBookingsWaitlistsTables(); //clear database
-	}
-	
-	/**
-	 * Closes the socket connection to the server appropriately, called after each test
+	 * Closes the socket connection to the server appropriately, MANUALLY called after each test
 	 */
 	@AfterEach public void closeConnection() throws ClassNotFoundException, SocketException, IOException {
+		/*
 		if (testSocket.isClosed()) {
 			if (goodClosed) {
 				return; //don't do anything if connection was already closed and *should be*
@@ -135,9 +127,10 @@ public class TestClientHandler {
 			}
 		}
 		ClientRequest closeRequest = new ClientRequest(ServerFunction.CLOSE);
-		assertEquals("Response from server upon closing connection", sendRequest(closeRequest).responseType(), ResponseType.CLOSED);
+		assertEquals(sendRequest(closeRequest).responseType(), ResponseType.CLOSED, "bad response from server upon closing connection");
 		testSocket.close();
 		goodClosed = true;
+		*/
 	}
 	
 	/**
@@ -158,7 +151,7 @@ public class TestClientHandler {
 		} else {
 			userNetID = "null user object";
 		}
-		assertEquals("Testing login for " + userNetID, expected, response.responseType()); //check response is AUTHENTICATED
+		assertEquals(expected, response.responseType(), "broken login for " + userNetID); //check response is AUTHENTICATED
 	}
 	
 	private static Stream<Arguments> testLoginUsers() {
@@ -211,21 +204,21 @@ public class TestClientHandler {
 		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
 		//check response (really this should be good because the two users we're using we just tested)
 		//but we'll do the assert anyway
-		assertEquals("testUserInfo: login of " + testUser.getNetID(), ResponseType.AUTHENTICATED, loginResponse.responseType()); //check response is AUTHENTICATED
+		assertEquals(ResponseType.AUTHENTICATED, loginResponse.responseType(), "testUserInfo: broken login for " + testUser.getNetID()); //check response is AUTHENTICATED
 		//build profile info request with testUser
 		ClientRequest infoRequest = new ClientRequest(ServerFunction.GET_PROFILE_INFO);
 		infoRequest.setUser(testUser);
 		//send info request, save server response
 		ServerResponse infoResponse = sendRequest(infoRequest);
 		//check response type is what's expected (SUCCESSFUL)
-		assertEquals("testUserInfo: info getting operation of "+ testUser.getNetID(), ResponseType.SUCCESS, infoResponse.responseType()); //check response is SUCCESS
+		assertEquals(ResponseType.SUCCESS, infoResponse.responseType(), "testUserInfo: broken profile retrieval for "+ testUser.getNetID()); //check response is SUCCESS
 		//get resulting user from infoResponse
 		User userResult = infoResponse.getUser();
 		//check userResult details against userExpected
-		assertEquals("testUserInfo: user name: ", userExpected.getName(), userResult.getName());
-		assertEquals("testUserInfo: net ID: ", userExpected.getNetID(), userResult.getNetID());
-		assertEquals("testUserInfo: student ID: ", userExpected.getStudentID(), userResult.getStudentID());
-		assertEquals("testUserInfo: user photo: ", userExpected.getUserPhoto(), userResult.getUserPhoto());
+		assertEquals(userExpected.getName(), userResult.getName(), "testUserInfo: bad user name");
+		assertEquals(userExpected.getNetID(), userResult.getNetID(), "testUserInfo: bad net id");
+		assertEquals(userExpected.getStudentID(), userResult.getStudentID(), "testUserInfo: bad student id");
+		assertEquals(userExpected.getUserPhoto(), userResult.getUserPhoto(), "testUserInfo: bad user photo");
 	}
 	
 	
@@ -252,7 +245,7 @@ public class TestClientHandler {
 	
 	@ParameterizedTest
 	@MethodSource("testMakeBookingArgs")
-	public void testMakeBooking(User testUser, String userPassword, List<Reservation> userBookings, List<ResponseType> opResponses) throws ClassNotFoundException, IOException {
+	public void testMakeBooking(User testUser, String userPassword, Reservation userBooking, ResponseType opExpected) throws ClassNotFoundException, IOException {
 		//build login request with testUser
 		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
 		loginRequest.setUser(testUser);
@@ -260,22 +253,19 @@ public class TestClientHandler {
 		//send login request
 		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
 		//check login works (this shouldn't be an issue because we tested these users previously)
-		assertEquals("testMakeBooking: login " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
-		//make bookings and check we're getting the successes/fails expected
-		for (int i = 0; i < userBookings.size(); i += 1) {
-			ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
-			bookingRequest.setUser(testUser);
-			Reservation userBooking = userBookings.get(i);
-			bookingRequest.setRecCentre(userBooking.getRecCentre());
-			bookingRequest.setTimeslot(userBooking.getTimedate());
-			//send make booking request, save server response
-			ServerResponse bookingResponse = sendRequest(bookingRequest);
-			//check response type is what's expected (SUCCESSFUL)
-			assertEquals("testMakeBooking: make booking " + testUser.getNetID(), opResponses.get(i), bookingResponse.responseType()); //check response is SUCCESS
-		}
+		assertEquals(loginResponse.responseType(), ResponseType.AUTHENTICATED, "testMakeBooking: bad login for " + testUser.getNetID()); //check response is AUTHENTICATED
+		//make booking and check we're getting the expected response
+		ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
+		bookingRequest.setUser(testUser);
+		bookingRequest.setRecCentre(userBooking.getRecCentre());
+		bookingRequest.setTimeslot(userBooking.getTimedate());
+		//send make booking request, save server response
+		ServerResponse bookingResponse = sendRequest(bookingRequest);
+		//check response type is what's expected
+		assertEquals(opExpected, bookingResponse.responseType(), "testMakeBooking: unexpected make booking response" + testUser.getNetID());
 		//check database is populated as it should be
 		List<Reservation> serverBookings = testDBH.getFutureBookings(testUser); //get booking list directly from DB
-		assertEquals("testMakeBooking: lists are equal", userBookings, serverBookings);
+		assertTrue(serverBookings.contains(userBooking), "testMakeBooking: booking (not) present in table");
 	}
 	
 	private static Stream<Arguments> testMakeBookingArgs() {
@@ -284,51 +274,29 @@ public class TestClientHandler {
 		User avonlea = new User("avonleav");
 		
 		//test 1: three separate bookings at three separate time slots
-		
-		//create reservation list
+		//create shreya's reservations
 		Reservation sb_1 = new Reservation(1, "2022-05-28 10:00:00"); //lyon centre
 		Reservation sb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
 		Reservation sb_3 = new Reservation(3, "2022-05-28 13:30:00"); //usc village
-		List<Reservation> shreyaBookings = new ArrayList<>();
-		shreyaBookings.add(sb_1);
-		shreyaBookings.add(sb_2);
-		shreyaBookings.add(sb_3);
-		//create expected operation response list
-		List<ResponseType> shreyaResponses = new ArrayList<>();
-		shreyaResponses.add(ResponseType.SUCCESS);
-		shreyaResponses.add(ResponseType.SUCCESS);
-		shreyaResponses.add(ResponseType.SUCCESS);
-		
 		
 		//test 2: two bookings at same centre different timeslots
-		//create reservation list
+		//create khanh's reservations
 		Reservation kb_1 = new Reservation(2, "2022-05-27 18:00:00"); //cromwell track
 		Reservation kb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
-		List<Reservation> khanhBookings = new ArrayList<>();
-		khanhBookings.add(kb_1);
-		khanhBookings.add(kb_2);
-		//create expected operation response list
-		List<ResponseType> khanhResponses = new ArrayList<>();
-		khanhResponses.add(ResponseType.SUCCESS);
-		khanhResponses.add(ResponseType.SUCCESS);		
 		
 		//test 3: two bookings at same centre same timeslots
-		//should allow only ONE entry in bookings table
-		//create reservation list
 		Reservation rb_1 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
 		Reservation rb_2 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
-		List<Reservation> avonleaBookings = new ArrayList<>();		
-		avonleaBookings.add(rb_1);
-		avonleaBookings.add(rb_2);
-		//create expected operation response list
-		List<ResponseType> avonleaResponses = new ArrayList<>();
-		avonleaResponses.add(ResponseType.SUCCESS);
-		avonleaResponses.add(ResponseType.FAIL);
+		
 		
 		return Stream.of( 
-				Arguments.of(shreya, "7654", shreyaBookings, shreyaResponses),
-				Arguments.of(khanh, "2345", khanhBookings, khanhResponses),
-				Arguments.of(avonlea, "6543", avonleaBookings, avonleaResponses)
+				Arguments.of(shreya, "7654", sb_1, ResponseType.SUCCESS),
+				Arguments.of(shreya, "7654", sb_2, ResponseType.SUCCESS),
+				Arguments.of(shreya, "7654", sb_3, ResponseType.SUCCESS),
+				Arguments.of(khanh, "2345", kb_1, ResponseType.SUCCESS),
+				Arguments.of(khanh, "2345", kb_2, ResponseType.SUCCESS),
+				Arguments.of(avonlea, "6543", rb_1, ResponseType.SUCCESS),
+				Arguments.of(avonlea, "6543", rb_2,	ResponseType.FAIL)
 				);
 	}
 	//TODO: test retrieve bookings
