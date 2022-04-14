@@ -1,6 +1,7 @@
 package com.errawi.trojanrec.testing;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -128,7 +129,6 @@ public class TestClientHandler {
 	 */
 	@ParameterizedTest
 	@MethodSource("testLoginUsers")
-	@Timeout(1)
 	public void testLogins(User user, String userPassword, ResponseType expected) throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
 		//build login request
 		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
@@ -176,6 +176,53 @@ public class TestClientHandler {
 				Arguments.of(nullid, "1234", ResponseType.UNAUTHENTICATED),
 				//null user
 				Arguments.of(null, "1234", ResponseType.UNAUTHENTICATED)
+				);
+	}
+	
+	/**
+	 * Checks that server won't consider a user authenticated w/o logging in
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 */
+	@Test
+	public void testBadLoginCheck() throws ClassNotFoundException, IOException {
+		ClientRequest lCheckRequest = new ClientRequest(ServerFunction.CHECK_IF_LOGGED_IN);
+		ServerResponse lcResponse = sendRequest(lCheckRequest);
+		assertEquals(ResponseType.UNAUTHENTICATED, lcResponse.responseType());
+	}
+	
+	/**
+	 * Tests whether the login check works when logged in
+	 */
+	@ParameterizedTest
+	@MethodSource("testLoginCheckUsers")
+	public void testGoodLoginCheck(User testUser, String userPassword, ResponseType expected) throws SocketException, UnknownHostException, ClassNotFoundException, IOException {
+		//build login request with testUser
+		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
+		loginRequest.setUser(testUser);
+		loginRequest.setUserPassword(userPassword);
+		//send login request
+		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
+		//check response (really this should be good because the two users we're using we just tested)
+		//but we'll do the assert anyway
+		assertEquals(ResponseType.AUTHENTICATED, loginResponse.responseType(), "testUserInfo: broken login for " + testUser.getNetID()); //check response is AUTHENTICATED
+		//now check that server considers user logged in
+		ClientRequest lCheckRequest = new ClientRequest(ServerFunction.CHECK_IF_LOGGED_IN);
+		lCheckRequest.setUser(testUser);
+		ServerResponse lcResponse = sendRequest(lCheckRequest);
+		assertEquals(expected, lcResponse.responseType());
+	}
+	
+	private static Stream<Arguments> testLoginCheckUsers() {
+		User will = new User("willw");
+		User moshe = new User("mosheheletz");
+		User karan = new User("karanm");
+		
+		return Stream.of(
+				//good users
+				Arguments.of(will, "3456", ResponseType.AUTHENTICATED),
+				Arguments.of(moshe, "7890", ResponseType.AUTHENTICATED),
+				Arguments.of(karan, "9876", ResponseType.AUTHENTICATED)
 				);
 	}
 	
