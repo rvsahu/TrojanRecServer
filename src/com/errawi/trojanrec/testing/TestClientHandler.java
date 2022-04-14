@@ -87,7 +87,7 @@ public class TestClientHandler {
 	 * Specifically (re)connects to server and creates IO streams
 	 */
 	private void connect() throws SocketException, UnknownHostException, IOException, ClassNotFoundException {
-		testSocket = new Socket("localhost", 1337);
+		testSocket = new Socket("18.144.84.223", 1337);
 		testOOS = new ObjectOutputStream(testSocket.getOutputStream());
 		testOIS = new ObjectInputStream(testSocket.getInputStream());
 		ClientRequest connectUser = new ClientRequest(ServerFunction.CONNECT);
