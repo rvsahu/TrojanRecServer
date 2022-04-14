@@ -281,6 +281,61 @@ public class DatabaseHandler {
         return timeslots;
     }
 
+    public synchronized ArrayList<String> getFutureCenterTimeslots(int center_id){       	
+        if(center_id != 1 && center_id != 2 && center_id != 3) {
+        	return null;
+        }
+        
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String date_now = formatter.format(new Date(System.currentTimeMillis()));
+        
+        ArrayList<String> timeslots = new ArrayList<>();
+        
+        try {
+            conn = datasource.getConnection();
+
+            PreparedStatement pst = conn.prepareStatement
+                    ("SELECT reservation_time "
+                    		+ "FROM trojanrec.timeslot "
+                    		+ "WHERE center_id = '" + center_id 
+                    		+ "' ORDER BY reservation_time");
+            ResultSet rs = pst.executeQuery();
+
+            // Use setters defined in User class
+            while(rs.next()){
+
+                int compare = date_now.compareTo(rs.getString("reservation_time"));
+                // if current datetime is less than to a reservation time, reservation is in future
+                if(compare < 0){
+                    timeslots.add(rs.getString("reservation_time"));
+                }
+
+            	
+            }
+        }
+        catch(SQLException e) {
+            System.out.println("SQLException Message: " + e.getMessage());
+            timeslots = null;
+        }
+        finally {
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(pst != null){
+                    pst.close();
+                }
+                if(conn != null){
+                    conn.close();
+                }
+            }
+            catch(SQLException e){
+                System.out.println("SQLException Message: " + e.getMessage());
+                timeslots = null;
+            }
+        }
+        return timeslots;
+    }
 
     /**
      *
