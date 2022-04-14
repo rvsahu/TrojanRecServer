@@ -59,11 +59,13 @@ public class TRServerMain {
 			System.exit(-1);
 			//TODO: log this to a file
 		} 
+		int connections = 0; //keep track of connection account, used to assign a debug id
 		System.out.println("Listening for connections..."); //TODO: output this to a log file too
 		while (serverSocket != null) { 
 			try {
+				connections += 1;
 				Socket newSocket = serverSocket.accept();
-				ClientHandler newCH = createClientHandler(newSocket, databaseHandler);
+				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, connections);
 				clientHandlers.add(newCH);
 				clientExecutor.submit(newCH); 
 			} catch (IOException ioe) {
@@ -78,9 +80,9 @@ public class TRServerMain {
 		closeSocket(serverSocket);
 	}
 	
-	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler) {
+	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
 		System.out.println("New client connection!"); //TODO: output to a log file too
-		return new ClientHandler(socket, dbHandler);
+		return new ClientHandler(socket, dbHandler, id);
 	}
 	
 	private static void closeSocket(ServerSocket serverSocket) {
