@@ -48,7 +48,13 @@ public class ClientHandler extends Thread {
 	 */
 	private boolean userAuthenticated;
 	
-	public ClientHandler(Socket socket, DatabaseHandler dbHandler) {
+	/**
+	 * Integer ID to identify this specific client handler (mainly for debug purposes)
+	 */
+	private int id;
+	
+	public ClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
+		this.id = id;
 		this.socket = socket;
 		userAuthenticated = false;
 		this.dbHandler = dbHandler;
@@ -71,15 +77,15 @@ public class ClientHandler extends Thread {
 		ServerResponse currResp; //references response to current request, may be sent or unsent	
 		try {
 			currReq = (ClientRequest)ois.readObject();
-			System.out.println("Connection attempt"); //TODO: log this to a file
+			System.out.println(id + " - Connection attempt"); //TODO: log this to a file
 			if (currReq.getFunction() == ServerFunction.CONNECT) {
 				//expected input, send back connection successful to
 				//complete handshake
-				System.out.println("Connect good"); //TODO: log this to a file
+				System.out.println(id + " - Connect good"); //TODO: log this to a file
 				currResp = new ServerResponse(ResponseType.CONNECTED);
 				oos.writeObject(currResp);
 			} else {
-				System.out.println("Connect bad"); //TODO: log this to a file
+				System.out.println(id + " - Connect bad"); //TODO: log this to a file
 				//received another request when it should have been CONNECT
 				//send a CLOSED type server response and close connection
 				sendClosedResponse();
@@ -89,22 +95,22 @@ public class ClientHandler extends Thread {
 		} catch (ClassCastException cce) {
 			//object sent was not a ClientRequest
 			//send a CLOSED type server response and close connection
-			System.out.println("Connect bad"); //TODO: log this to a file
+			System.out.println(id + " - Connect bad"); //TODO: log this to a file
 			sendClosedResponse();
 			//exit run() (which ends thread)
 			return;
 		} catch (ClassNotFoundException cnfe) {
 			//not quite sure how we would get here but compiler says need to check for it
 			//send a CLOSED type server response and close connection
-			System.out.println("Connect bad"); //TODO: log this to a file
+			System.out.println(id + " - Connect bad"); //TODO: log this to a file
 			sendClosedResponse();
 			//exit run() (which ends thread)
 			return;
 		} catch (EOFException eofe) {
-			System.out.println("Client disconnected"); //TODO: log this to a file
+			System.out.println(id + " - Client disconnected"); //TODO: log this to a file
 			//eofe.printStackTrace();
 		} catch (IOException ioe) {
-			System.out.println("Connect bad"); //TODO: log this to a file
+			System.out.println(id + " - Connect bad"); //TODO: log this to a file
 			ioe.printStackTrace();
 			return;
 		} 
@@ -114,14 +120,14 @@ public class ClientHandler extends Thread {
 		while (true) {
 			try {
 				currReq = (ClientRequest)ois.readObject();
-				System.out.print("new request recieved: ");
+				System.out.print(id + " - new request recieved: ");
 				if (currReq == null) {
 					sendFailResponse();
 				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
 					System.out.println("Login attempt"); //TODO: log this to a file
 					//check if user already authenticated
 					if (userAuthenticated) {
-						System.out.println("Already logged in"); //TODO: log this to a file
+						System.out.println(id + " - Already logged in"); //TODO: log this to a file
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
 						oos.writeObject(currResp);
@@ -130,7 +136,7 @@ public class ClientHandler extends Thread {
 					//check user is non-null
 					if (currReq.getUser() == null) {
 						//user is null, send UNAUTHENTICATED response
-						System.out.println("Login bad - null user"); //TODO: log this to a file
+						System.out.println(id + " - Login bad - null user"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 						continue;
 					}
@@ -138,13 +144,13 @@ public class ClientHandler extends Thread {
 					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
 					//check if successful or not
 					if (userAuthenticated) {
-						System.out.println("Login good"); //TODO: log this to a file
+						System.out.println(id + " - Login good"); //TODO: log this to a file
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
 						oos.writeObject(currResp);		
 					} else {
 						//send UNAUTHENTICATED response
-						System.out.println("Login bad"); //TODO: log this to a file
+						System.out.println(id + " - Login bad"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 					}
 				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
@@ -154,11 +160,11 @@ public class ClientHandler extends Thread {
 				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
 					System.out.println("Check login attempt"); //TODO: log this to a file
 					if (userAuthenticated) {
-						System.out.println("Check login good"); //TODO: log this to a file
+						System.out.println(id + " - Check login good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
 						oos.writeObject(currResp);		
 					} else {
-						System.out.println("Check login bad"); //TODO: log this to a file
+						System.out.println(id + " - Check login bad"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 					}
 				} else if (!userAuthenticated) {
@@ -171,13 +177,13 @@ public class ClientHandler extends Thread {
 					User serverSideUser = dbHandler.retrieveUser(currReq.getUser().getNetID());
 					//check if serverSideUser actually exists (studentID should not be -1)
 					if (serverSideUser.getStudentID() != -1) {
-						System.out.println("Profile good"); //TODO: log this to a file
+						System.out.println(id + " - Profile good"); //TODO: log this to a file
 						//send server side user back to client
 						currResp = new ServerResponse(ResponseType.SUCCESS); //create response with SUCCESS type
 						currResp.setUser(serverSideUser); //add server-side user to response
 						oos.writeObject(currResp); //send response
 					} else {
-						System.out.println("Profile bad"); //TODO: log this to a file
+						System.out.println(id + " - Profile bad"); //TODO: log this to a file
 						//send fail response back to client
 						sendFailResponse();
 					}
@@ -185,12 +191,12 @@ public class ClientHandler extends Thread {
 					System.out.println("Current bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
 					if(reservations != null) {
-						System.out.println("Current bookings good"); //TODO: log this to a file
+						System.out.println(id + " - Current bookings good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(reservations);	
 						oos.writeObject(currResp);					
 					} else {
-						System.out.println("Current bookings bad"); //TODO: log this to a file
+						System.out.println(id + " - Current bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}									
 				}
@@ -198,12 +204,12 @@ public class ClientHandler extends Thread {
 					System.out.println("Previous bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
-						System.out.println("Previous bookings good"); //TODO: log this to a file
+						System.out.println(id + " - Previous bookings good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(reservations);	
 						oos.writeObject(currResp);	
 					} else {
-						System.out.println("Previous bookings bad"); //TODO: log this to a file
+						System.out.println(id + " - Previous bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}	
 				}
@@ -211,12 +217,12 @@ public class ClientHandler extends Thread {
 					System.out.println("Wait list attempt"); //TODO: log this to a file
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
-						System.out.println("Wait list good"); //TODO: log this to a file
+						System.out.println(id + " - Wait list good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setBookings(waitlist_reservations);
 						oos.writeObject(currResp);	
 					} else {
-						System.out.println("Wait list bad"); //TODO: log this to a file
+						System.out.println(id + " - Wait list bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
 				}
@@ -224,12 +230,12 @@ public class ClientHandler extends Thread {
 					System.out.println("Get slots attempt"); //TODO: log this to a file
 					ArrayList<String> timeslots = dbHandler.getCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
-						System.out.println("Get slots good"); //TODO: log this to a file
+						System.out.println(id + " - Get slots good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.SUCCESS);
 						currResp.setTimeslots(timeslots);
 						oos.writeObject(currResp);		
 					} else {
-						System.out.println("Get slots bad"); //TODO: log this to a file
+						System.out.println(id + " - Get slots bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
 				}
@@ -242,16 +248,15 @@ public class ClientHandler extends Thread {
 					System.out.println("res rec centre: " + res.getRecCentre());
 					System.out.println("res time slot: " + res.getTimedate());
 					boolean max_cap = dbHandler.isCapMax(res);
-					System.out.println("is cap max done");
 					boolean success = false;
 					if(max_cap) {
-						System.out.println("Make bookings bad, waitlist instead"); //TODO: log this to a file
+						System.out.println(id + " - Make bookings bad, waitlist instead"); //TODO: log this to a file
 						// add user to wait list because the bookings are full for that reservation time
 						dbHandler.addToWaitlist(res, currReq.getUser());
 						success = true;
 					}
 					else {
-						System.out.println("Make bookings good"); //TODO: log this to a file
+						System.out.println(id + " - Make bookings good"); //TODO: log this to a file
 						// make booking
 						success = dbHandler.makeBooking(res, currReq.getUser());
 					}	
@@ -269,7 +274,7 @@ public class ClientHandler extends Thread {
 					res.setTimedate(currReq.getTimeslot());
 					dbHandler.removeBooking(res, currReq.getUser());
 					currResp = new ServerResponse(ResponseType.SUCCESS);				
-					System.out.println("Current bookings good (in theory)"); //TODO: log this to a file
+					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
@@ -284,7 +289,7 @@ public class ClientHandler extends Thread {
 				//exit run() (which ends thread)
 				return;
 			} catch (EOFException eofe) {
-				System.out.println("Client disconnected"); //TODO: log this to a file
+				System.out.println(id + " - Client disconnected"); //TODO: log this to a file
 				//eofe.printStackTrace();
 				return;
 			} catch (IOException ioe) {
