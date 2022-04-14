@@ -156,7 +156,8 @@ public class ClientHandler extends Thread {
 				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
 					System.out.println("Close request"); //TODO: log this to a file
 					sendClosedResponse(); //kill thread once client connection it handles is closed
-					return; //
+					System.out.println(id + " - Close request good"); //TODO: log this to a file
+					return; //exit thread once socket closed
 				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
 					System.out.println("Check login attempt"); //TODO: log this to a file
 					if (userAuthenticated) {
