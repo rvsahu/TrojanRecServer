@@ -38,5 +38,15 @@ public class Reservation implements Serializable {
     public String getTimedate() {
     	return timedate;
     }
-
+    
+    @Override public boolean equals(Object other) {
+    	if (!(other instanceof Reservation)) {
+    		return false;
+    	}
+    	Reservation rOther = (Reservation)(other);
+    	if (rOther.getRecCentre() == recCentre && rOther.getTimedate().equals(timedate)) {
+    		return true;
+    	}
+    	return false;
+    }
 }
