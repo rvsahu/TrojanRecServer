@@ -147,6 +147,16 @@ public class TestDatabaseHandler {
 		assertEquals(result, null);	
 		result = db.getCenterTimeslots(4);
 		assertEquals(result, null);	
+		
+		// get future timeslots
+		result = db.getFutureCenterTimeslots(1);
+		assertEquals(result.size(), 8);
+		
+		result = db.getFutureCenterTimeslots(2);
+		assertEquals(result.size(), 10);
+		
+		result = db.getFutureCenterTimeslots(3);
+		assertEquals(result.size(), 6);
 	}
 	
 	@Test
