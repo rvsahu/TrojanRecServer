@@ -159,7 +159,7 @@ public class TestDatabaseHandler {
 		assertEquals(result.size(), 6);
 	}
 	
-	@Test
+	@Test 
 	public void testGetFutureBookings() {
 		// populated in populateDatabase()
 		
@@ -208,15 +208,6 @@ public class TestDatabaseHandler {
 		db_res = future_bookings.get(0);
 		assertEquals(db_res.getRecCentre(), reservation.getRecCentre());
 		assertEquals(db_res.getTimedate(), reservation.getTimedate());
-		
-		// for invalid user
-		user = db.retrieveUser(null);
-		future_bookings = db.getFutureBookings(user);
-		assertEquals(future_bookings, null);
-		
-		user = db.retrieveUser("invalidusertest");
-		future_bookings = db.getFutureBookings(user);
-		assertEquals(future_bookings, null);
 	}
 	
 	@Test
@@ -255,15 +246,6 @@ public class TestDatabaseHandler {
 		db_res = past_bookings.get(0);
 		assertEquals(db_res.getRecCentre(), reservation.getRecCentre());
 		assertEquals(db_res.getTimedate(), reservation.getTimedate());	
-		
-		// for invalid user
-		user = db.retrieveUser(null);
-		past_bookings = db.getPastBookings(user);
-		assertEquals(past_bookings, null);
-		
-		user = db.retrieveUser("invalidusertest");
-		past_bookings = db.getPastBookings(user);
-		assertEquals(past_bookings, null);
 	}
 	
 	@Test
@@ -291,14 +273,6 @@ public class TestDatabaseHandler {
 		assertEquals(reservation.getRecCentre(), 3);
 		assertEquals(reservation.getTimedate(), "2022-05-28 13:30:00");
 		assertEquals(waitlist.size(), 1); 
-		
-		user = db.retrieveUser(null); // invalid user
-		waitlist = db.getWaitlistForUser(user);
-		assertEquals(waitlist, null);
-		
-		user = db.retrieveUser("invaliduser"); // invalid user
-		waitlist = db.getWaitlistForUser(user);
-		assertEquals(waitlist, null);
 		
 		// get whole waitlist for a reservation
 		reservation.setRecCentre(3);
