@@ -1,7 +1,6 @@
 package com.errawi.trojanrec.testing;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
@@ -287,7 +285,7 @@ public class TestClientHandler {
 	
 	@ParameterizedTest
 	@MethodSource("testMakeBookingArgs")
-	public void testMakeBooking(User testUser, String userPassword, List<Reservation> userBookings) throws ClassNotFoundException, IOException {
+	public void testMakeBooking(User testUser, String userPassword, List<Reservation> userBookings, List<ResponseType> opResponses) throws ClassNotFoundException, IOException {
 		//build login request with testUser
 		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
 		loginRequest.setUser(testUser);
@@ -297,15 +295,16 @@ public class TestClientHandler {
 		//check response (really this should be good because the two users we're using we just tested)
 		//but we'll do the assert anyway
 		assertEquals("testMakeBooking: login " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
-		for (Reservation booking : userBookings) {
+		for (int i = 0; i < userBookings.size(); i += 1) {
 			ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
 			bookingRequest.setUser(testUser);
-			bookingRequest.setRecCentre(booking.getRecCentre());
-			bookingRequest.setTimeslot(booking.getTimedate());
+			Reservation userBooking = userBookings.get(i);
+			bookingRequest.setRecCentre(userBooking.getRecCentre());
+			bookingRequest.setTimeslot(userBooking.getTimedate());
 			//send make booking request, save server response
 			ServerResponse bookingResponse = sendRequest(bookingRequest);
 			//check response type is what's expected (SUCCESSFUL)
-			assertEquals("testMakeBooking: make booking " + testUser.getNetID(), ResponseType.SUCCESS, bookingResponse.responseType()); //check response is SUCCESS
+			assertEquals("testMakeBooking: make booking " + testUser.getNetID(), opResponses.get(i), bookingResponse.responseType()); //check response is SUCCESS
 		}
 	}
 	
@@ -314,16 +313,43 @@ public class TestClientHandler {
 		User khanh = new User("khanhpham");
 		User avonlea = new User("avonleav");
 		
+		//test 1: three separate bookings at three separate time slots
+		
+		//create reservation list
+		Reservation sb_1 = new Reservation(1, "2022-05-28 10:00:00"); //lyon centre
+		Reservation sb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
+		Reservation sb_3 = new Reservation(3, "2022-05-28 13:30:00"); //usc village
 		List<Reservation> shreyaBookings = new ArrayList<>();
+		shreyaBookings.add(sb_1);
+		shreyaBookings.add(sb_2);
+		shreyaBookings.add(sb_3);
+		//create expected operation response list
+		List<ResponseType> shreyaResponses = new ArrayList();
+		shreyaResponses.add(ResponseType.SUCCESS);
+		shreyaResponses.add(ResponseType.SUCCESS);
+		shreyaResponses.add(ResponseType.SUCCESS);
 		
+		
+		//test 2: two bookings at same centre different timeslots
+		//create reservation list
+		Reservation kb_1 = new Reservation(2, "2022-05-27 18:00:00"); //cromwell track
+		Reservation kb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
 		List<Reservation> khanhBookings = new ArrayList<>();
+		khanhBookings.add(kb_1);
+		khanhBookings.add(kb_2);
+		//create expected operation response list
+		List<ResponseType> khanhResponses = new ArrayList<>();
+		khanhResponses.add(ResponseType.SUCCESS);
+		khanhResponses.add(ResponseType.SUCCESS);		
 		
+		//test 3: two bookings at same centre same timeslots
+		//should allow only ONE entry in bookings table
 		List<Reservation> avonleaBookings = new ArrayList<>();
 		
 		return Stream.of( 
-				Arguments.of(shreya, "7654", 1, "2022-05-28 10:00:00"), //shreya books lyon centre at 
-				Arguments.of(khanh, "2345", 2), //khanh books cromwell track at
-				Arguments.of(avonlea, "6543", 3) //avonlea books usc village at
+				Arguments.of(shreya, "7654", shreyaBookings),
+				Arguments.of(khanh, "2345", 2, khanhBookings),
+				Arguments.of(avonlea, "6543", 3, avonleaBookings)
 				);
 	}
 	//TODO: test retrieve bookings
