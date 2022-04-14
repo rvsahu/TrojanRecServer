@@ -15,6 +15,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
+import com.errawi.trojanrec.utils.Reservation;
 import com.errawi.trojanrec.utils.ResponseType;
 import com.errawi.trojanrec.utils.ServerFunction;
 import com.errawi.trojanrec.utils.ServerResponse;
@@ -27,6 +28,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -190,7 +193,7 @@ public class TestClientHandler {
 		} else {
 			userNetID = "null user object";
 		}
-		assertEquals("Testing login for " + userNetID, response.responseType(), expected); //check response is AUTHENTICATED
+		assertEquals("Testing login for " + userNetID, expected, response.responseType()); //check response is AUTHENTICATED
 	}
 	
 	private static Stream<Arguments> testLoginUsers() {
@@ -243,14 +246,14 @@ public class TestClientHandler {
 		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
 		//check response (really this should be good because the two users we're using we just tested)
 		//but we'll do the assert anyway
-		assertEquals("testUserInfo: login of " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
+		assertEquals("testUserInfo: login of " + testUser.getNetID(), ResponseType.AUTHENTICATED, loginResponse.responseType()); //check response is AUTHENTICATED
 		//build profile info request with testUser
 		ClientRequest infoRequest = new ClientRequest(ServerFunction.GET_PROFILE_INFO);
 		infoRequest.setUser(testUser);
 		//send info request, save server response
 		ServerResponse infoResponse = sendRequest(infoRequest);
 		//check response type is what's expected (SUCCESSFUL)
-		assertEquals("testUserInfo: info getting operation of "+ testUser.getNetID(), infoResponse.responseType(), ResponseType.SUCCESS); //check response is SUCCESS
+		assertEquals("testUserInfo: info getting operation of "+ testUser.getNetID(), ResponseType.SUCCESS, infoResponse.responseType()); //check response is SUCCESS
 		//get resulting user from infoResponse
 		User userResult = infoResponse.getUser();
 		//check userResult details against userExpected
@@ -279,4 +282,51 @@ public class TestClientHandler {
 				Arguments.of(moshe, "7890", mosheExpected)
 				);
 	}
+	
+	//TODO: test make booking
+	
+	@ParameterizedTest
+	@MethodSource("testMakeBookingArgs")
+	public void testMakeBooking(User testUser, String userPassword, List<Reservation> userBookings) throws ClassNotFoundException, IOException {
+		//build login request with testUser
+		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
+		loginRequest.setUser(testUser);
+		loginRequest.setUserPassword(userPassword);
+		//send login request
+		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
+		//check response (really this should be good because the two users we're using we just tested)
+		//but we'll do the assert anyway
+		assertEquals("testMakeBooking: login " + testUser.getNetID(), loginResponse.responseType(), ResponseType.AUTHENTICATED); //check response is AUTHENTICATED
+		for (Reservation booking : userBookings) {
+			ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
+			bookingRequest.setUser(testUser);
+			bookingRequest.setRecCentre(booking.getRecCentre());
+			bookingRequest.setTimeslot(booking.getTimedate());
+			//send make booking request, save server response
+			ServerResponse bookingResponse = sendRequest(bookingRequest);
+			//check response type is what's expected (SUCCESSFUL)
+			assertEquals("testMakeBooking: make booking " + testUser.getNetID(), ResponseType.SUCCESS, bookingResponse.responseType()); //check response is SUCCESS
+		}
+	}
+	
+	private static Stream<Arguments> testMakeBookingArgs() {
+		User shreya = new User("shreyac");
+		User khanh = new User("khanhpham");
+		User avonlea = new User("avonleav");
+		
+		List<Reservation> shreyaBookings = new ArrayList<>();
+		
+		List<Reservation> khanhBookings = new ArrayList<>();
+		
+		List<Reservation> avonleaBookings = new ArrayList<>();
+		
+		return Stream.of( 
+				Arguments.of(shreya, "7654", 1, "2022-05-28 10:00:00"), //shreya books lyon centre at 
+				Arguments.of(khanh, "2345", 2), //khanh books cromwell track at
+				Arguments.of(avonlea, "6543", 3) //avonlea books usc village at
+				);
+	}
+	//TODO: test retrieve bookings
+	
+	//TODO: 
 }
