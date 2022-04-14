@@ -235,17 +235,24 @@ public class ClientHandler extends Thread {
 					System.out.println("res time slot: " + res.getTimedate());
 					boolean max_cap = dbHandler.isCapMax(res);
 					System.out.println("is cap max done");
+					boolean success = false;
 					if(max_cap) {
 						System.out.println("Make bookings bad, waitlist instead"); //TODO: log this to a file
 						// add user to wait list because the bookings are full for that reservation time
-						dbHandler.addToWaitlist(res, currReq.getUser());			
+						dbHandler.addToWaitlist(res, currReq.getUser());
+						success = true;
 					}
 					else {
 						System.out.println("Make bookings good"); //TODO: log this to a file
 						// make booking
-						dbHandler.makeBooking(res, currReq.getUser());			
+						success = dbHandler.makeBooking(res, currReq.getUser());
 					}	
-					currResp = new ServerResponse(ResponseType.SUCCESS);				
+					if (!success) {
+						sendFailResponse();
+					} else {
+						currResp = new ServerResponse(ResponseType.SUCCESS);
+						oos.writeObject(currResp);
+					}
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
 					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
