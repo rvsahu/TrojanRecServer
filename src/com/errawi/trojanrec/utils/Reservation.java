@@ -23,6 +23,11 @@ public class Reservation implements Serializable {
     	recCentre = -1;
     }
     
+    public Reservation(int recCentre, String timedate) {
+    	this.timedate = timedate;
+    	this.recCentre = recCentre;
+    }
+    
     public void setRecCentre(int recCentre) {
         this.recCentre = recCentre;
     }
