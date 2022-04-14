@@ -10,11 +10,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
-import com.errawi.trojanrec.utils.Reservation;
 import com.errawi.trojanrec.utils.ResponseType;
 import com.errawi.trojanrec.utils.ServerFunction;
 import com.errawi.trojanrec.utils.ServerResponse;
@@ -27,8 +25,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -37,7 +33,7 @@ import java.util.stream.Stream;
  * @author RSahu
  */
 public class TestClientHandler {
-	 /**
+	/**
      * Stream to send objects (ClientRequest objects specifically) to the server over.
      */
     private ObjectOutputStream testOOS;
@@ -74,8 +70,8 @@ public class TestClientHandler {
 	 * Sets up a new connection to the 'server' 
 	 */
 	@BeforeEach public void clearDBAndConnect() throws SocketException, UnknownHostException, IOException, ClassNotFoundException {
-		//clears DB of tables
-		//clearDB();
+		//clear DB
+		clearDB();
 		//establishes a connection and creates input and output streams
 		connect();
 	}
@@ -83,12 +79,8 @@ public class TestClientHandler {
 	/**
 	 * Specifically clears DB bookings table and wait list
 	 */
-	@AfterAll private static void clearDBStatic() {
-		//testDBH.clearBookingsWaitlistsTables();
-	}
-	
-	@AfterEach private void clearDB() {
-		//testDBH.clearBookingsWaitlistsTables();
+	@AfterAll private static void clearDB() {
+		testDBH.clearBookingsWaitlistsTables();
 	}
 	
 	/**
@@ -118,7 +110,6 @@ public class TestClientHandler {
 	 * Closes the socket connection to the server appropriately, MANUALLY called after each test
 	 */
 	@AfterEach public void closeConnection() throws ClassNotFoundException, SocketException, IOException {
-		/*
 		if (testSocket.isClosed()) {
 			if (goodClosed) {
 				return; //don't do anything if connection was already closed and *should be*
@@ -130,7 +121,6 @@ public class TestClientHandler {
 		assertEquals(sendRequest(closeRequest).responseType(), ResponseType.CLOSED, "bad response from server upon closing connection");
 		testSocket.close();
 		goodClosed = true;
-		*/
 	}
 	
 	/**
@@ -241,65 +231,5 @@ public class TestClientHandler {
 				);
 	}
 	
-	//TODO: test make booking
-	
-	@ParameterizedTest
-	@MethodSource("testMakeBookingArgs")
-	public void testMakeBooking(User testUser, String userPassword, Reservation userBooking, ResponseType opExpected) throws ClassNotFoundException, IOException {
-		//build login request with testUser
-		ClientRequest loginRequest = new ClientRequest(ServerFunction.LOGIN);
-		loginRequest.setUser(testUser);
-		loginRequest.setUserPassword(userPassword);
-		//send login request
-		ServerResponse loginResponse = sendRequest(loginRequest); //send login request and get response
-		//check login works (this shouldn't be an issue because we tested these users previously)
-		assertEquals(loginResponse.responseType(), ResponseType.AUTHENTICATED, "testMakeBooking: bad login for " + testUser.getNetID()); //check response is AUTHENTICATED
-		//make booking and check we're getting the expected response
-		ClientRequest bookingRequest = new ClientRequest(ServerFunction.MAKE_BOOKING);
-		bookingRequest.setUser(testUser);
-		bookingRequest.setRecCentre(userBooking.getRecCentre());
-		bookingRequest.setTimeslot(userBooking.getTimedate());
-		//send make booking request, save server response
-		ServerResponse bookingResponse = sendRequest(bookingRequest);
-		//check response type is what's expected
-		assertEquals(opExpected, bookingResponse.responseType(), "testMakeBooking: unexpected make booking response" + testUser.getNetID());
-		//check database is populated as it should be
-		List<Reservation> serverBookings = testDBH.getFutureBookings(testUser); //get booking list directly from DB
-		assertTrue(serverBookings.contains(userBooking), "testMakeBooking: booking (not) present in table");
-	}
-	
-	private static Stream<Arguments> testMakeBookingArgs() {
-		User shreya = new User("shreyac");
-		User khanh = new User("khanhpham");
-		User avonlea = new User("avonleav");
-		
-		//test 1: three separate bookings at three separate time slots
-		//create shreya's reservations
-		Reservation sb_1 = new Reservation(1, "2022-05-28 10:00:00"); //lyon centre
-		Reservation sb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
-		Reservation sb_3 = new Reservation(3, "2022-05-28 13:30:00"); //usc village
-		
-		//test 2: two bookings at same centre different timeslots
-		//create khanh's reservations
-		Reservation kb_1 = new Reservation(2, "2022-05-27 18:00:00"); //cromwell track
-		Reservation kb_2 = new Reservation(2, "2022-05-27 20:00:00"); //cromwell track
-		
-		//test 3: two bookings at same centre same timeslots
-		Reservation rb_1 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
-		Reservation rb_2 = new Reservation(3, "2022-05-27 13:30:00"); //usc village
-		
-		
-		return Stream.of( 
-				Arguments.of(shreya, "7654", sb_1, ResponseType.SUCCESS),
-				Arguments.of(shreya, "7654", sb_2, ResponseType.SUCCESS),
-				Arguments.of(shreya, "7654", sb_3, ResponseType.SUCCESS),
-				Arguments.of(khanh, "2345", kb_1, ResponseType.SUCCESS),
-				Arguments.of(khanh, "2345", kb_2, ResponseType.SUCCESS),
-				Arguments.of(avonlea, "6543", rb_1, ResponseType.SUCCESS),
-				Arguments.of(avonlea, "6543", rb_2,	ResponseType.FAIL)
-				);
-	}
-	//TODO: test retrieve bookings
-	
-	//TODO: 
+	//TODO: test retrieve bookings 
 }
