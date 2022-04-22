@@ -523,8 +523,11 @@ public class DatabaseHandler {
             if(rs.next()){
             	System.out.println("something in rs results");
                 timeslot_id = rs.getInt("timeslot_id");
+                System.out.println("timeslot id: " + timeslot_id);
                 
                 // fetch user
+                System.out.println("user object is null? " + user != null);
+                System.out.println("user id: " + user.getNetID());
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
                 		+ "WHERE net_id = '" + user.getNetID() + "'");
