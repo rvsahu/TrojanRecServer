@@ -198,9 +198,11 @@ public class DatabaseHandler {
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()) {
+            	System.out.println("valid reservation given");
                 return true;
             }
-            // no user was present in ResultSet, reservation does not exist
+            // no reservation was present in ResultSet, reservation does not exist
+            System.out.println("bad reservation given");
             return false;
             
         }
