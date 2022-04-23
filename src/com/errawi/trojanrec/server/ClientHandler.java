@@ -279,7 +279,8 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					dbHandler.removeBooking(res, currReq.getUser());
-					currResp = new ServerResponse(ResponseType.SUCCESS);				
+					currResp = new ServerResponse(ResponseType.SUCCESS);
+					oos.writeObject(currResp);
 					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
 				}
 			} catch (ClassCastException cce) {
