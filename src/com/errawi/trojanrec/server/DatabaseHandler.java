@@ -526,7 +526,10 @@ public class DatabaseHandler {
                 System.out.println("timeslot id: " + timeslot_id);
                 
                 // fetch user
-                System.out.println("user object is null? " + user != null);
+                System.out.print("user object is null? ");
+                System.out.println(user != null);
+                System.out.print("user net id is null? ");
+                System.out.println(user.getNetID() != null);
                 System.out.println("user id: " + user.getNetID());
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
