@@ -282,6 +282,27 @@ public class ClientHandler extends Thread {
 					currResp = new ServerResponse(ResponseType.SUCCESS);
 					oos.writeObject(currResp);
 					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
+				} else if (currReq.getFunction() == ServerFunction.CANCEL_WAIT_LIST) {
+					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
+					Reservation res = new Reservation();
+					res.setRecCentre(currReq.getRecCentre());
+					res.setTimedate(currReq.getTimeslot());
+					//check whether the waitlist entry we're trying to remove actually exists
+					boolean entryExists = dbHandler.waitlistExists(res, currReq.getUser());
+					if (entryExists) {
+						//entry exists, remove it
+						boolean removed = dbHandler.removeWaitlist(res, currReq.getUser());
+						if (removed) {
+							currResp = new ServerResponse(ResponseType.SUCCESS);
+							oos.writeObject(currResp);
+						} else {
+							sendFailResponse();
+						}
+					} else {
+						//entry doesn't exist, send response to client saying no action was taken
+						sendNoActionResponse();
+					}
+					
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
@@ -313,7 +334,7 @@ public class ClientHandler extends Thread {
 	
 	/**
 	 * Below are cookie-cutter responses that may need to be sent, specifically
-	 * FAIL, CLOSED, and UNAUTHENTICATED. This may not be as useful for some of
+	 * FAIL, CLOSED, NO_ACTION, and UNAUTHENTICATED. This may not be as useful for some of
 	 * the other response types as extra information would be added to the
 	 * ServerResponse objects. 
 	 */
@@ -359,6 +380,24 @@ public class ClientHandler extends Thread {
 		ServerResponse response = new ServerResponse(ResponseType.FAIL);
 		try {
 			oos.writeObject(response); //send FAIL response
+			return true;
+		} catch (IOException ioe) {
+			//couldn't successfully send back response, return false
+			ioe.printStackTrace();
+			return false;
+		}
+	}
+	
+	/**
+	 * Sends a NO_ACTION response back to the client, and returns whether sending it was
+	 * successful or not
+	 * 
+	 * @return     True if a NO_ACTION response was sent successfully, false otherwise.
+	 */
+	private boolean sendNoActionResponse() {
+		ServerResponse response = new ServerResponse(ResponseType.NO_ACTION);
+		try {
+			oos.writeObject(response); //send NO_ACTION response
 			return true;
 		} catch (IOException ioe) {
 			//couldn't successfully send back response, return false
