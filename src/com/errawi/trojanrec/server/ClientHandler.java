@@ -288,10 +288,10 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					//check whether the waitlist entry we're trying to remove actually exists
-					boolean entryExists = dbHandler.waitlistExists(res, currReq.getUser());
+					boolean entryExists = dbHandler.waitlistEntryExists(res, currReq.getUser());
 					if (entryExists) {
 						//entry exists, remove it
-						boolean removed = dbHandler.removeWaitlist(res, currReq.getUser());
+						boolean removed = dbHandler.removeWaitlistEntry(res, currReq.getUser());
 						if (removed) {
 							currResp = new ServerResponse(ResponseType.SUCCESS);
 							oos.writeObject(currResp);
