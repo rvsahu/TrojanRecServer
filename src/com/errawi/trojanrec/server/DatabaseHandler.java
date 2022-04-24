@@ -705,12 +705,12 @@ public class DatabaseHandler {
     * @param user       User to remove from booking table
     *
     */
-   public synchronized void removeBooking(Reservation reservation, User user) {
+   public synchronized boolean removeBooking(Reservation reservation, User user) {
 
 	   boolean exists = timeslotExists(reservation);
 	   if(!exists) {
    		   System.out.println("Reservation does not exist");
-   		   return;
+   		   return false;
 	   }
    	
        try {
@@ -769,6 +769,7 @@ public class DatabaseHandler {
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);
                            
+                           return true;                       
                        }
                        else {
                        	System.out.println("A user tried to remove a booking, but they didn't have a booking - this is not allowed! No futher action is necessary :-)");
@@ -795,7 +796,7 @@ public class DatabaseHandler {
                System.out.println("SQLException Message: " + e.getMessage());
            }
        }
-	   
+       return false;	   
    }
 
 
@@ -1183,7 +1184,95 @@ public class DatabaseHandler {
 	   
    }
 
+    /**
+    *
+    * @param Reservation  Reservation object containing the time/date and center
+    * @param user       User to remove waitlist booking for
+    *
+    */
+   public synchronized boolean removeWaitlistEntry(Reservation reservation, User user) {
 
+	   boolean exists = timeslotExists(reservation);
+	   if(!exists) {
+   		   System.out.println("Reservation does not exist");
+   		   return false;
+	   }
+   	
+       try {
+           conn = datasource.getConnection();
+
+           PreparedStatement pst = conn.prepareStatement
+                   ("SELECT timeslot_id "
+                   		+ "FROM trojanrec.timeslot "
+                   		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
+
+           ResultSet rs = pst.executeQuery();
+
+           PreparedStatement pst_k, pst_j;
+           ResultSet rs_k, rs_j;
+           Statement stmt;
+           
+           int timeslot_id = -1;
+
+           if(rs.next()){
+               timeslot_id = rs.getInt("timeslot_id");
+               
+               // fetch user
+               pst_k = conn.prepareStatement("SELECT user_id "
+               		+ "FROM trojanrec.userinfo "
+               		+ "WHERE net_id = '" + user.getNetID() + "'");
+               rs_k = pst_k.executeQuery();
+
+                   if(rs_k.next()){
+                   	
+                   	int userID = rs_k.getInt("user_id");
+                   	
+                       pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * "
+                       		+ "FROM trojanrec.waitlist "
+                       		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
+                       rs_j = pst_j.executeQuery();
+                       int booking_made = 0;
+                       if(rs_j.next()) {
+                       	booking_made = rs_j.getInt(1);
+                       }
+                       
+                       // user has waitlist booking that can be deleted
+                       if(booking_made != 0) {                                                 
+                           String sql = "DELETE FROM trojanrec.waitlist "
+                           		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "'";
+                           stmt = conn.createStatement();
+                           stmt.executeUpdate(sql);      
+                           return true;
+                       }
+                       else {
+                    	   System.out.println("A user tried to remove a waitlist entry, but they didn't have a waitlist spot - this is not allowed! No futher action is necessary :-)");                  	  
+                       }                  
+                   }             
+           }
+       }
+       catch(SQLException e) {
+           System.out.println("SQLException Message: " + e.getMessage());
+       }
+       finally {
+           try{
+               if(rs != null){
+                   rs.close();
+               }
+               if(pst != null){
+                   pst.close();
+               }
+               if(conn != null){
+                   conn.close();
+               }
+           }
+           catch(SQLException e){
+               System.out.println("SQLException Message: " + e.getMessage());
+           }
+       }
+       
+       return false;
+	   
+   }
 
     /**
      *
