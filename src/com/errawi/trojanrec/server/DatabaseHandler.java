@@ -726,12 +726,12 @@ public class DatabaseHandler {
     * @param user       User to remove from booking table
     *
     */
-   public synchronized void removeBooking(Reservation reservation, User user) {
+   public synchronized boolean removeBooking(Reservation reservation, User user) {
 
 	   boolean exists = timeslotExists(reservation);
 	   if(!exists) {
    		   System.out.println("Reservation does not exist");
-   		   return;
+   		   return false;
 	   }
    	
        try {
@@ -790,6 +790,7 @@ public class DatabaseHandler {
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);
                            
+                           return true;                       
                        }
                        else {
                        	System.out.println("A user tried to remove a booking, but they didn't have a booking - this is not allowed! No futher action is necessary :-)");
@@ -816,7 +817,7 @@ public class DatabaseHandler {
                System.out.println("SQLException Message: " + e.getMessage());
            }
        }
-	   
+       return false;	   
    }
 
 
@@ -1121,12 +1122,12 @@ public class DatabaseHandler {
     * @param user       User to remove waitlist booking for
     *
     */
-   public synchronized void removeWaitlistEntry(Reservation reservation, User user) {
+   public synchronized boolean removeWaitlistEntry(Reservation reservation, User user) {
 
 	   boolean exists = timeslotExists(reservation);
 	   if(!exists) {
    		   System.out.println("Reservation does not exist");
-   		   return;
+   		   return false;
 	   }
    	
        try {
@@ -1153,8 +1154,6 @@ public class DatabaseHandler {
                		+ "FROM trojanrec.userinfo "
                		+ "WHERE net_id = '" + user.getNetID() + "'");
                rs_k = pst_k.executeQuery();
-               
-               
 
                    if(rs_k.next()){
                    	
@@ -1174,10 +1173,11 @@ public class DatabaseHandler {
                            String sql = "DELETE FROM trojanrec.waitlist "
                            		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "'";
                            stmt = conn.createStatement();
-                           stmt.executeUpdate(sql);                                                
+                           stmt.executeUpdate(sql);      
+                           return true;
                        }
                        else {
-                       	System.out.println("A user tried to remove a waitlist entry, but they didn't have a waitlist spot - this is not allowed! No futher action is necessary :-)");
+                    	   System.out.println("A user tried to remove a waitlist entry, but they didn't have a waitlist spot - this is not allowed! No futher action is necessary :-)");                  	  
                        }                  
                    }             
            }
@@ -1201,6 +1201,8 @@ public class DatabaseHandler {
                System.out.println("SQLException Message: " + e.getMessage());
            }
        }
+       
+       return false;
 	   
    }
 
