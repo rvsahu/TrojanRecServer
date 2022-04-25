@@ -249,28 +249,28 @@ public class ClientHandler extends Thread {
 					res.setTimedate(currReq.getTimeslot());
 					System.out.print("centre: " + res.getRecCentre());
 					System.out.println(", time slot: " + res.getTimedate());
-					boolean max_cap = dbHandler.isCapMax(res);
-					boolean success = false;
-					if(max_cap) {
-						System.out.println(id + " - Make bookings bad, waitlist instead"); //TODO: log this to a file
-						// add user to wait list because the bookings are full for that reservation time
-						dbHandler.addToWaitlist(res, currReq.getUser());
-						success = true;
-					} else {
-						// make booking
-						success = dbHandler.makeBooking(res, currReq.getUser());
-						System.out.print(id + " - Make bookings "); //TODO: log this to a file
-						if (success) {
-							System.out.println("good");
-						} else {
-							System.out.println("bad");
-						}
-					}	
-					if (!success) {
+					//first check if the booking already exists
+					if (dbHandler.bookingEntryExists(res, currReq.getUser())) {
+						//booking already exists, send a NO_ACTION back
+						System.out.println(id + " - Make bookings bad, booking exists, send no action response");
+						sendNoActionResponse();
+						continue; //await next message
+					}
+					//then check if slot is full
+					if (dbHandler.isCapMax(res)) {
+						System.out.println(id + " - Make bookings bad, slot full, send fail response"); //TODO: log this to a file
 						sendFailResponse();
+						continue; //await next message
+					}
+					//then try and make booking
+					boolean success = dbHandler.makeBooking(res, currReq.getUser());
+					System.out.print(id + " - Make bookings "); //TODO: log this to a file
+					if (success) {
+						System.out.println("good, send success response");
+						oos.writeObject(new ServerResponse(ResponseType.SUCCESS));
 					} else {
-						currResp = new ServerResponse(ResponseType.SUCCESS);
-						oos.writeObject(currResp);
+						System.out.println("bad, send fail response");
+						sendFailResponse();
 					}
 				}
 				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
