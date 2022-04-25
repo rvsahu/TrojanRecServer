@@ -247,10 +247,11 @@ public class ClientHandler extends Thread {
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
+					User currUser = currReq.getUser();
 					System.out.print("centre: " + res.getRecCentre());
 					System.out.println(", time slot: " + res.getTimedate());
 					//first check if the booking already exists
-					if (dbHandler.bookingEntryExists(res, currReq.getUser())) {
+					if (dbHandler.bookingEntryExists(res, currUser)) {
 						//booking already exists, send a NO_ACTION back
 						System.out.println(id + " - Make bookings bad, booking exists, send no action response");
 						sendNoActionResponse();
@@ -263,9 +264,15 @@ public class ClientHandler extends Thread {
 						continue; //await next message
 					}
 					//then try and make booking
-					boolean success = dbHandler.makeBooking(res, currReq.getUser());
+					boolean success = dbHandler.makeBooking(res, currUser);
 					System.out.print(id + " - Make bookings "); //TODO: log this to a file
 					if (success) {
+						//booking was successful, we should remove a wait list entry for this reservation if it exists
+						if (dbHandler.waitlistEntryExists(res, currUser)) {
+							//a wait list entry exists for this reservation (and this user), now remove it since booking was made
+							dbHandler.removeWaitlistEntry(res, currUser);
+						}
+						//should send success response in either case
 						System.out.println("good, send success response");
 						oos.writeObject(new ServerResponse(ResponseType.SUCCESS));
 					} else {
