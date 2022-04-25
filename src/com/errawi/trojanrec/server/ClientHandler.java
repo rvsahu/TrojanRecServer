@@ -201,8 +201,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Current bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}									
-				}
-				else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
+				} else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
 					System.out.println("Previous bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
@@ -214,8 +213,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Previous bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}	
-				}
-				else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
+				} else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
 					System.out.println("Wait list attempt"); //TODO: log this to a file
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
@@ -227,8 +225,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Wait list bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
-				}
-				else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
+				} else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
 					System.out.println("Get slots attempt"); //TODO: log this to a file
 					ArrayList<String> timeslots = dbHandler.getFutureCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
@@ -240,8 +237,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Get slots bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
-				}
-				else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
+				} else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
 					System.out.print("Make booking attempt "); //TODO: log this to a file
 					//TODO: modify client side code to send a reservation rather than construct one here
 					Reservation res = new Reservation();
@@ -279,8 +275,7 @@ public class ClientHandler extends Thread {
 						System.out.println("bad, send fail response");
 						sendFailResponse();
 					}
-				}
-				else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
+				} else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
 					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
