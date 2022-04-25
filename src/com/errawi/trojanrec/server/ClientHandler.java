@@ -290,6 +290,8 @@ public class ClientHandler extends Thread {
 					currResp = new ServerResponse(ResponseType.SUCCESS);
 					oos.writeObject(currResp);
 					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
+				} else if (currFunc == ServerFunction.JOIN_WAIT_LIST) {
+					
 				} else if (currFunc == ServerFunction.CANCEL_WAIT_LIST) {
 					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
