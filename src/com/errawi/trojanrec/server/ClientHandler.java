@@ -125,6 +125,7 @@ public class ClientHandler extends Thread {
 				currReq = (ClientRequest)ois.readObject();
 				System.out.print(id + " - new request recieved: ");
 				if (currReq == null) {
+					System.out.println("Null request, send fail response");
 					sendFailResponse();
 					continue;
 				}
