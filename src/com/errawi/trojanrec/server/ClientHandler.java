@@ -75,11 +75,13 @@ public class ClientHandler extends Thread {
 		//accept the first communication, basically a handshake.
 		//once this is done successfully, enter infinite loop.
 		ClientRequest currReq; //used to reference current client request
+		ServerFunction currFunc; //the function currently requested of the server
 		ServerResponse currResp; //references response to current request, may be sent or unsent	
 		try {
 			currReq = (ClientRequest)ois.readObject();
+			currFunc = currReq.getFunction();
 			System.out.println(id + " - Connection attempt"); //TODO: log this to a file
-			if (currReq.getFunction() == ServerFunction.CONNECT) {
+			if (currFunc == ServerFunction.CONNECT) {
 				//expected input, send back connection successful to
 				//complete handshake
 				System.out.println(id + " - Connect good"); //TODO: log this to a file
@@ -124,7 +126,10 @@ public class ClientHandler extends Thread {
 				System.out.print(id + " - new request recieved: ");
 				if (currReq == null) {
 					sendFailResponse();
-				} else if (currReq.getFunction() == ServerFunction.LOGIN) {
+					continue;
+				}
+				currFunc = currReq.getFunction();
+				if (currFunc == ServerFunction.LOGIN) {
 					System.out.println("Login attempt"); //TODO: log this to a file
 					//check if user already authenticated
 					if (userAuthenticated) {
@@ -154,12 +159,12 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Login bad"); //TODO: log this to a file
 						sendUnauthenticatedResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.CLOSE) {
+				} else if (currFunc == ServerFunction.CLOSE) {
 					System.out.println("Close request"); //TODO: log this to a file
 					sendClosedResponse(); //kill thread once client connection it handles is closed
 					System.out.println(id + " - Close request good"); //TODO: log this to a file
 					return; //exit thread once socket closed
-				} else if (currReq.getFunction() == ServerFunction.CHECK_IF_LOGGED_IN) {
+				} else if (currFunc == ServerFunction.CHECK_IF_LOGGED_IN) {
 					System.out.println("Check login attempt"); //TODO: log this to a file
 					if (userAuthenticated) {
 						System.out.println(id + " - Check login good"); //TODO: log this to a file
@@ -173,7 +178,7 @@ public class ClientHandler extends Thread {
 					//return UNAUTHENTICATED response, meaning the server
 					//will not perform the client request because the User is not logged in
 					sendUnauthenticatedResponse();
-				} else if (currReq.getFunction() == ServerFunction.GET_PROFILE_INFO) {
+				} else if (currFunc == ServerFunction.GET_PROFILE_INFO) {
 					//get server side User object from client side user's net ID
 					System.out.println("Profile attempt"); //TODO: log this to a file
 					User serverSideUser = dbHandler.retrieveUser(currReq.getUser().getNetID());
@@ -189,7 +194,7 @@ public class ClientHandler extends Thread {
 						//send fail response back to client
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.GET_CURRENT_BOOKINGS) {
+				} else if (currFunc == ServerFunction.GET_CURRENT_BOOKINGS) {
 					System.out.println("Current bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
 					if(reservations != null) {
@@ -201,7 +206,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Current bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}									
-				} else if (currReq.getFunction() == ServerFunction.GET_PREVIOUS_BOOKINGS) {
+				} else if (currFunc == ServerFunction.GET_PREVIOUS_BOOKINGS) {
 					System.out.println("Previous bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
@@ -213,7 +218,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Previous bookings bad"); //TODO: log this to a file
 						sendFailResponse();
 					}	
-				} else if (currReq.getFunction() == ServerFunction.GET_WAIT_LIST) {
+				} else if (currFunc == ServerFunction.GET_WAIT_LIST) {
 					System.out.println("Wait list attempt"); //TODO: log this to a file
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
@@ -225,7 +230,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Wait list bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.GET_CENTRE_TIME_SLOTS) {
+				} else if (currFunc == ServerFunction.GET_CENTRE_TIME_SLOTS) {
 					System.out.println("Get slots attempt"); //TODO: log this to a file
 					ArrayList<String> timeslots = dbHandler.getFutureCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
@@ -237,7 +242,7 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Get slots bad"); //TODO: log this to a file
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.MAKE_BOOKING) {
+				} else if (currFunc == ServerFunction.MAKE_BOOKING) {
 					System.out.print("Make booking attempt "); //TODO: log this to a file
 					//TODO: modify client side code to send a reservation rather than construct one here
 					Reservation res = new Reservation();
@@ -275,7 +280,7 @@ public class ClientHandler extends Thread {
 						System.out.println("bad, send fail response");
 						sendFailResponse();
 					}
-				} else if (currReq.getFunction() == ServerFunction.CANCEL_BOOKING) {
+				} else if (currFunc == ServerFunction.CANCEL_BOOKING) {
 					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
@@ -284,7 +289,7 @@ public class ClientHandler extends Thread {
 					currResp = new ServerResponse(ResponseType.SUCCESS);
 					oos.writeObject(currResp);
 					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
-				} else if (currReq.getFunction() == ServerFunction.CANCEL_WAIT_LIST) {
+				} else if (currFunc == ServerFunction.CANCEL_WAIT_LIST) {
 					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
