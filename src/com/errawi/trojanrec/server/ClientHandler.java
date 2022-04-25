@@ -291,7 +291,23 @@ public class ClientHandler extends Thread {
 					oos.writeObject(currResp);
 					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
 				} else if (currFunc == ServerFunction.JOIN_WAIT_LIST) {
-					
+					System.out.println("Join waitlist attempt"); //TODO: log this to a file
+					//TODO: modify client side code to send a reservation rather than construct one here
+					Reservation res = new Reservation();
+					res.setRecCentre(currReq.getRecCentre());
+					res.setTimedate(currReq.getTimeslot());
+					User currUser = currReq.getUser();
+					//first check if the booking already exists
+					if (dbHandler.waitlistEntryExists(res, currUser)) {
+						//booking already exists, send a NO_ACTION back
+						System.out.println(id + " - Join wait list bad, entry exists, send no action response");
+						sendNoActionResponse();
+						continue; //await next message
+					}
+					//then join wait list (this should never fail)
+					dbHandler.addToWaitlist(res, currUser);
+					System.out.println(id + " - Join wait list good"); //TODO: log this to a file
+					oos.writeObject(new ServerResponse(ResponseType.SUCCESS)); //sends SUCCESS response back
 				} else if (currFunc == ServerFunction.CANCEL_WAIT_LIST) {
 					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
