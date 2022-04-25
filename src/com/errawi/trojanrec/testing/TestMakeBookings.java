@@ -163,7 +163,7 @@ public class TestMakeBookings {
 				Arguments.of(khanh, "2345", kb_1, ResponseType.SUCCESS),
 				Arguments.of(khanh, "2345", kb_2, ResponseType.SUCCESS),
 				Arguments.of(avonlea, "6543", rb_1, ResponseType.SUCCESS),
-				Arguments.of(avonlea, "6543", rb_2,	ResponseType.FAIL)
+				Arguments.of(avonlea, "6543", rb_2,	ResponseType.NO_ACTION)
 				);
 	}
 }
