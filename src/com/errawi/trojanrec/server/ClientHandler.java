@@ -311,10 +311,14 @@ public class ClientHandler extends Thread {
 						sendNoActionResponse();
 						continue; //await next message from client
 					}
-					//then join wait list (this should never fail)
-					dbHandler.addToWaitlist(res, currUser);
+					//then join wait list
+					boolean success = dbHandler.addToWaitlist(res, currUser);
 					System.out.println(id + " - Join wait list good"); //TODO: log this to a file
-					oos.writeObject(new ServerResponse(ResponseType.SUCCESS)); //sends SUCCESS response back
+					if (success) {
+						oos.writeObject(new ServerResponse(ResponseType.SUCCESS)); //sends SUCCESS response back
+					} else {
+						sendFailResponse();
+					}
 				} else if (currFunc == ServerFunction.CANCEL_WAIT_LIST) {
 					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
