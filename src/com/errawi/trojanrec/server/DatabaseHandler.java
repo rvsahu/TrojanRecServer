@@ -539,13 +539,13 @@ public class DatabaseHandler {
      * @param user       User to add to waitlist table
      *
      */
-    public synchronized void addToWaitlist(Reservation reservation, User user) {
-    	
+    public synchronized boolean addToWaitlist(Reservation reservation, User user) {
     	boolean exists = timeslotExists(reservation);
     	if(!exists) {
-    		return;
+    		return false;
     	}
     	
+    	boolean added = false;
         try {
             conn = datasource.getConnection();
 
@@ -583,7 +583,8 @@ public class DatabaseHandler {
                         String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) "
                         		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                         stmt = conn.createStatement();
-                        stmt.executeUpdate(sql);                	
+                        stmt.executeUpdate(sql);
+                        added = true;
                     }
                     else {
                     	System.out.println("A user tried to make a duplicate waitlist booking - this is not allowed! No futher action is necessary :-)");
@@ -611,6 +612,7 @@ public class DatabaseHandler {
                 System.out.println("SQLException Message: " + e.getMessage());
             }
         }
+        return added;
     }
 
     /**
