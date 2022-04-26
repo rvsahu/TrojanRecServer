@@ -297,12 +297,19 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					User currUser = currReq.getUser();
-					//first check if the booking already exists
+					//first check if the wait list already exists
 					if (dbHandler.waitlistEntryExists(res, currUser)) {
-						//booking already exists, send a NO_ACTION back
-						System.out.println(id + " - Join wait list bad, entry exists, send no action response");
+						//wait list entry already exists, send a NO_ACTION back
+						System.out.println(id + " - Join wait list bad, wait lest entry exists, send no action response");
 						sendNoActionResponse();
 						continue; //await next message
+					}
+					//then check if a booking already exists (no reason to add to waitlist if a booking is already made)
+					if (dbHandler.bookingEntryExists(res, currUser)) {
+						//wait list entry already exists, send a NO_ACTION back
+						System.out.println(id + " - Join wait list bad, booking for user exists, send no action response");
+						sendNoActionResponse();
+						continue; //await next message from client
 					}
 					//then join wait list (this should never fail)
 					dbHandler.addToWaitlist(res, currUser);
