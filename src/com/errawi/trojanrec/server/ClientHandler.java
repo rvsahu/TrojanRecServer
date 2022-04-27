@@ -95,7 +95,6 @@ public class ClientHandler extends Thread {
 				//complete handshake
 				System.out.println(id + " - Connect good"); //TODO: log this to a file
 				currResp = new ServerResponse(ResponseType.CONNECTED);
-				oos.writeObject(currResp);
 			} else {
 				System.out.println(id + " - Connect bad"); //TODO: log this to a file
 				//received another request when it should have been CONNECT
