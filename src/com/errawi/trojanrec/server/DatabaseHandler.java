@@ -3,6 +3,7 @@ package com.errawi.trojanrec.server;
 
 import com.errawi.trojanrec.utils.User;
 import com.errawi.trojanrec.utils.Reservation;
+import com.errawi.trojanrec.utils.NotificationBank;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
@@ -13,12 +14,11 @@ import java.text.SimpleDateFormat;
 
 
 public class DatabaseHandler {
-	//TODO: add notif bank as a field
-	//NotificationBank notifBank
     String properties_file;
     HikariConfig config;
     HikariDataSource datasource;
     Connection conn;
+    NotificationBank notification_bank;
     PreparedStatement pst;
     ResultSet rs;
 
@@ -28,11 +28,12 @@ public class DatabaseHandler {
         log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
-    public DatabaseHandler() { //TODO: modify to take a NotificationBank instance and save in field notifBank
+    public DatabaseHandler() { 
         properties_file = "db.properties";
         config = new HikariConfig(properties_file);
         datasource = new HikariDataSource(config);
         conn = null;
+        notification_bank = new NotificationBank();
     }
     
     public synchronized HikariDataSource datasource() {
@@ -739,7 +740,13 @@ public class DatabaseHandler {
    		   return false;
 	   }
 	   
-	   //set flag if cap max
+	   boolean wasCap;
+	   if(isCapMax(reservation)) {
+		    wasCap = true;
+	   }
+	   else {
+		   wasCap = false;
+	   }
 	   
        try {
            conn = datasource.getConnection();
@@ -795,13 +802,12 @@ public class DatabaseHandler {
                            		+ "SET cap_curr = cap_curr - 1 "
                            		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                            stmt = conn.createStatement();
-                           stmt.executeUpdate(sql);
+                           stmt.executeUpdate(sql);                         
                            
-                           //check cap max flag: if so, executing following code:
-                           //query wait list: get list of all user ids for this specific time slot
-                           //convert list of user ids to net ids
-                           //put that list of users into notif bank by calling the following:
-                           //notifBank.addUserNotifs(listOfNetIDs);
+                           // if the Reservation was full, need to notify users on waitlist
+                           if(wasCap == true) {                      	  
+                        	   notification_bank.addUserNotifs(getWaitlist(reservation), reservation);                   
+                           }
                            
                            return true;                       
                        }
