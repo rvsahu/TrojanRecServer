@@ -7,6 +7,9 @@ import java.net.SocketException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
+
+import com.errawi.trojanrec.utils.NotificationBank;
+
 import java.util.concurrent.ExecutorService;
 
 public class TRServerMain {
@@ -34,10 +37,12 @@ public class TRServerMain {
 			System.err.println("Interrupted while killing existing processes on port " + SOCKET_PORT +"!");
 		}
 		*/
+		System.out.println("Creating notification bank...");
+		NotificationBank notifBank = new NotificationBank();
 		System.out.println("Initialising data handlers...");
 		List<ClientHandler> clientHandlers = new ArrayList<>(); 
 		ExecutorService clientExecutor = Executors.newCachedThreadPool(); 
-		DatabaseHandler databaseHandler = new DatabaseHandler();
+		DatabaseHandler databaseHandler = new DatabaseHandler(notifBank);
 		
 		//declare a server socket for this program, will be initialised later
 		ServerSocket serverSocket = null;
