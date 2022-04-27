@@ -71,7 +71,7 @@ public class TRServerMain {
 		while (serverSocket != null) { 
 			try {
 				Socket newSocket = serverSocket.accept();
-				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, ++connections);
+				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, notifBank, ++connections);
 				clientHandlers.add(newCH);
 				clientExecutor.submit(newCH); 
 			} catch (IOException ioe) {
@@ -86,9 +86,9 @@ public class TRServerMain {
 		closeSocket(serverSocket);
 	}
 	
-	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
+	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler, NotificationBank notifBank, int id) {
 		System.out.println("New client connection!"); //TODO: output to a log file too
-		return new ClientHandler(socket, dbHandler, id);
+		return new ClientHandler(socket, dbHandler, notifBank, id);
 	}
 	
 	private static void closeSocket(ServerSocket serverSocket) {
