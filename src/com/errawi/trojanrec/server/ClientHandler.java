@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.errawi.trojanrec.utils.*;
 
@@ -357,8 +358,14 @@ public class ClientHandler extends Thread {
 					
 				}
 				
-				//check notification bank for user's notifs
-				
+				//check notification bank for user's notifs, given they're authenticated
+				if (userAuthenticated && currReq.getUser() != null) {
+					List<Reservation> userOpenedSlots = notifBank.getUserNotifs(currReq.getUser().getNetID());
+					if (userOpenedSlots != null && userOpenedSlots.size() != 0) {
+						//user is wait listed for slots that had opened, put in response before sending it back
+						currResp.setOpenedSlots(userOpenedSlots);
+					}
+				}
 				//send back current response
 				oos.writeObject(currResp);
 				//close socket if need to
