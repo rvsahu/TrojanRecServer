@@ -358,14 +358,17 @@ public class ClientHandler extends Thread {
 				}
 				
 				//check notification bank for user's notifs, given they're authenticated
+				System.out.println(id + " - Checking for notifs");
 				if (userAuthenticated && currReq.getUser() != null) {
 					List<Reservation> userOpenedSlots = notifBank.getUserNotifs(currReq.getUser().getNetID());
 					if (userOpenedSlots != null && userOpenedSlots.size() != 0) {
+						System.out.println(id + " - Client has available slots!");
 						//user is wait listed for slots that had opened, put in response before sending it back
 						currResp.setOpenedSlots(userOpenedSlots);
 					}
 				}
 				//send back current response
+				System.out.println(id + " - Sending response");
 				oos.writeObject(currResp);
 				//close socket if need to
 				if (currResp.responseType() == ResponseType.CLOSED) {
