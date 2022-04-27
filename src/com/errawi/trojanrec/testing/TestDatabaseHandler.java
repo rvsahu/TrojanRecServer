@@ -2,6 +2,7 @@ package com.errawi.trojanrec.testing;
 
 import com.errawi.trojanrec.utils.User;
 import com.errawi.trojanrec.server.DatabaseHandler;
+import com.errawi.trojanrec.utils.NotificationBank;
 import com.errawi.trojanrec.utils.Reservation;
 import java.util.ArrayList;
 
@@ -12,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class TestDatabaseHandler {
 	
-	public static DatabaseHandler db = new DatabaseHandler(); 
+	public static DatabaseHandler db = new DatabaseHandler(new NotificationBank()); 
 	public static boolean isInitialized = false;
 	
 	@Before

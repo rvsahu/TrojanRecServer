@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
+import com.errawi.trojanrec.utils.NotificationBank;
 import com.errawi.trojanrec.utils.Reservation;
 import com.errawi.trojanrec.utils.ResponseType;
 import com.errawi.trojanrec.utils.ServerFunction;
@@ -59,7 +60,7 @@ public class TestMakeBookings {
 	 * Creates a database handler that we can use to clear tables between each test
 	 */
 	@BeforeAll public static void setUpDatabase() {
-		testDBH = new DatabaseHandler();
+		testDBH = new DatabaseHandler(new NotificationBank());
 		clearDB();
 	}
 	

@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.errawi.trojanrec.server.DatabaseHandler;
 import com.errawi.trojanrec.utils.ClientRequest;
+import com.errawi.trojanrec.utils.NotificationBank;
 import com.errawi.trojanrec.utils.ResponseType;
 import com.errawi.trojanrec.utils.ServerFunction;
 import com.errawi.trojanrec.utils.ServerResponse;
@@ -64,7 +65,7 @@ public class TestClientHandler {
 	 * Creates a database handler that we can use to clear tables between each test
 	 */
 	@BeforeAll public static void setUpDatabase() {
-		testDBH = new DatabaseHandler();
+		testDBH = new DatabaseHandler(new NotificationBank());
 	}
 	
 	/**
