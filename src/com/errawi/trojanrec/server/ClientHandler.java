@@ -33,6 +33,13 @@ public class ClientHandler extends Thread {
 	 * and database while preventing race conditions.
 	 */
 	private DatabaseHandler dbHandler;
+	
+	/**
+	 * (Synchronised) notification bank that all ClientHandlers can check
+	 * to see if the client they service has wait list entries that they can
+	 * now make bookings for.
+	 */
+	private NotificationBank notifBank;
 
 	/**
 	 * User object representing the User that is logged into the (Android) TrojanRec
@@ -54,11 +61,12 @@ public class ClientHandler extends Thread {
 	 */
 	private int id;
 	
-	public ClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
+	public ClientHandler(Socket socket, DatabaseHandler dbHandler, NotificationBank notifBank, int id) {
 		this.id = id;
 		this.socket = socket;
 		userAuthenticated = false;
 		this.dbHandler = dbHandler;
+		this.notifBank = notifBank;
 		try {
 			ois = new ObjectInputStream(socket.getInputStream());
 			oos = new ObjectOutputStream(socket.getOutputStream());
