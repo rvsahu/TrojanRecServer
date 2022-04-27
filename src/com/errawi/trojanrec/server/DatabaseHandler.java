@@ -750,14 +750,14 @@ public class DatabaseHandler {
 	   
        try {
            conn = datasource.getConnection();
-
+           System.out.println("dbhandler - connection made");
            PreparedStatement pst = conn.prepareStatement
                    ("SELECT timeslot_id "
                    		+ "FROM trojanrec.timeslot "
                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
            ResultSet rs = pst.executeQuery();
-
+           System.out.println("dbhandler - rs gotten");
            PreparedStatement pst_k, pst_j;
            ResultSet rs_k, rs_j;
            Statement stmt;
@@ -765,6 +765,7 @@ public class DatabaseHandler {
            int timeslot_id = -1;
 
            if(rs.next()){
+        	   System.out.println("dbhandler - entered rs if");
                timeslot_id = rs.getInt("timeslot_id");
                
                // fetch user
@@ -772,12 +773,11 @@ public class DatabaseHandler {
                		+ "FROM trojanrec.userinfo "
                		+ "WHERE net_id = '" + user.getNetID() + "'");
                rs_k = pst_k.executeQuery();
+               System.out.println("dbhandler - rs_k gotten");
                
-               
-
-                   if(rs_k.next()){
-                   	
-                   	int userID = rs_k.getInt("user_id");
+               if(rs_k.next()){
+            	   System.out.println("dbhandler - entered rs_k if");
+            	   int userID = rs_k.getInt("user_id");
                    	
                        // query - make sure user does have booking at that center/timedate
                    	   // might be redundant because client-side likely won't show the option to 
@@ -786,8 +786,10 @@ public class DatabaseHandler {
                        		+ "FROM trojanrec.booking "
                        		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                        rs_j = pst_j.executeQuery();
+                       System.out.println("dbhandler - rs_j gotten");
                        int booking_made = 0;
                        if(rs_j.next()) {
+                    	   System.out.println("dbhandler - booking made");
                        	booking_made = rs_j.getInt(1);
                        }
                        
@@ -803,9 +805,10 @@ public class DatabaseHandler {
                            		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);                         
-                           
+                           System.out.println("dbhandler - made booking");
                            // if the Reservation was full, need to notify users on waitlist
-                           if(wasCap == true) {                      	  
+                           if(wasCap == true) {                      	
+                        	   System.out.println("dbhandler - adding to notif bank");
                         	   notification_bank.addUserNotifs(getWaitlist(reservation), reservation);                   
                            }
                            
