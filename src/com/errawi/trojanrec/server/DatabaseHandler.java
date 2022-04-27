@@ -13,7 +13,8 @@ import java.text.SimpleDateFormat;
 
 
 public class DatabaseHandler {
-
+	//TODO: add notif bank as a field
+	//NotificationBank notifBank
     String properties_file;
     HikariConfig config;
     HikariDataSource datasource;
@@ -27,7 +28,7 @@ public class DatabaseHandler {
         log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
-    public DatabaseHandler() {
+    public DatabaseHandler() { //TODO: modify to take a NotificationBank instance and save in field notifBank
         properties_file = "db.properties";
         config = new HikariConfig(properties_file);
         datasource = new HikariDataSource(config);
@@ -692,6 +693,8 @@ public class DatabaseHandler {
                             stmt = conn.createStatement();
                             stmt.executeUpdate(sql);
                             successfulBooking = true;
+                            
+                            
                         }
                         else {
                         	System.out.println("A user tried to make a duplicate booking - this is not allowed! No futher action is necessary :-)");
@@ -735,7 +738,9 @@ public class DatabaseHandler {
    		   System.out.println("Reservation does not exist");
    		   return false;
 	   }
-   	
+	   
+	   //set flag if cap max
+	   
        try {
            conn = datasource.getConnection();
 
@@ -791,6 +796,12 @@ public class DatabaseHandler {
                            		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                            stmt = conn.createStatement();
                            stmt.executeUpdate(sql);
+                           
+                           //check cap max flag: if so, executing following code:
+                           //query wait list: get list of all user ids for this specific time slot
+                           //convert list of user ids to net ids
+                           //put that list of users into notif bank by calling the following:
+                           //notifBank.addUserNotifs(listOfNetIDs);
                            
                            return true;                       
                        }
