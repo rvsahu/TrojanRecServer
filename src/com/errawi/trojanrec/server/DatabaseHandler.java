@@ -28,12 +28,12 @@ public class DatabaseHandler {
         log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
-    public DatabaseHandler() { 
+    public DatabaseHandler(NotificationBank notification_bank) { 
         properties_file = "db.properties";
         config = new HikariConfig(properties_file);
         datasource = new HikariDataSource(config);
         conn = null;
-        notification_bank = new NotificationBank();
+        this.notification_bank = notification_bank;
     }
     
     public synchronized HikariDataSource datasource() {
