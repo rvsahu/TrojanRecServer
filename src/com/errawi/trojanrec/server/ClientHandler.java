@@ -151,6 +151,7 @@ public class ClientHandler extends Thread {
 				if (currReq == null) {
 					System.out.println("Null request, send fail response");
 					currResp = createFailResponse();
+					oos.writeObject(currResp);
 					continue;
 				}
 				currFunc = currReq.getFunction();
@@ -347,6 +348,8 @@ public class ClientHandler extends Thread {
 					}
 					
 				}
+				
+				//check notification bank for user's notifs
 				
 				//send back current response
 				oos.writeObject(currResp);
