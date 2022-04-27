@@ -15,7 +15,7 @@ public class NotificationBank {
 		userNotifs = new HashMap<String, List<Reservation> >();
 	}
 	
-	public synchronized boolean addUserNotifs(List<String> listOfUsers, Reservation timeslot) {
+	public synchronized boolean addUserNotifs(List<User> listOfUsers, Reservation timeslot) {
 		return false;
 	}
 	
@@ -26,6 +26,6 @@ public class NotificationBank {
 	public synchronized List<Reservation> getUserNotifs(String netID) {
 		if (netID == null)
 			return null;
-		return userNotifs.get(netID);
+		return userNotifs.get(netID);	
 	}
 }
