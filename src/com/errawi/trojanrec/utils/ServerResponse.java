@@ -19,10 +19,17 @@ public class ServerResponse implements Serializable {
      */
 	private List<Reservation> openedSlots;
 	
+	/**
+	 * Boolean flag that will help client determine whether
+	 * it needs to check openedSlots in this response
+	 */
+	private boolean hasOpenedSlots;
+	
 	private ArrayList<String> timeslots;
 	
 	public ServerResponse(ResponseType responseType) {
 		this.responseType = responseType;
+		hasOpenedSlots = false;
 	}
 	
 	public void setResponse(ResponseType responseType) {
@@ -58,10 +65,15 @@ public class ServerResponse implements Serializable {
 	}
         
 	public void setOpenedSlots(List<Reservation> openedSlots) {
+		hasOpenedSlots = true;
 		this.openedSlots = openedSlots;
 	}
     
 	public List<Reservation> getOpenedSlots() {
 		return openedSlots;
+	}
+	
+	public boolean hasOpenedSlots() {
+		return hasOpenedSlots;
 	}
 }
