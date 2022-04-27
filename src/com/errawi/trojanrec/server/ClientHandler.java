@@ -307,7 +307,7 @@ public class ClientHandler extends Thread {
 					res.setTimedate(currReq.getTimeslot());
 					dbHandler.removeBooking(res, currReq.getUser());
 					currResp = new ServerResponse(ResponseType.SUCCESS);
-					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
+					System.out.println(id + " - Cancel bookings good (in theory)"); //TODO: log this to a file
 				} else if (currFunc == ServerFunction.JOIN_WAIT_LIST) {
 					System.out.println("Join waitlist attempt"); //TODO: log this to a file
 					//TODO: modify client side code to send a reservation rather than construct one here
