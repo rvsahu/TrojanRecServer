@@ -23,7 +23,6 @@ public class TRServerMain {
 	
 	public static void main(String[] args) {
 		System.out.println("Killing any existing processes on port " + SOCKET_PORT + ".");
-		/*
 		try {
 			Process p = Runtime.getRuntime().exec(KILL_COMMAND);
 			p.waitFor();
@@ -36,7 +35,6 @@ public class TRServerMain {
 		} catch (InterruptedException ie) {
 			System.err.println("Interrupted while killing existing processes on port " + SOCKET_PORT +"!");
 		}
-		*/
 		System.out.println("Creating notification bank...");
 		NotificationBank notifBank = new NotificationBank();
 		System.out.println("Initialising data handlers...");

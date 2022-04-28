@@ -8,7 +8,6 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 import java.text.SimpleDateFormat;
 
 
@@ -22,10 +21,8 @@ public class DatabaseHandler {
     PreparedStatement pst;
     ResultSet rs;
 
-    private static final Logger log;
     static {
         System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$-7s] %5$s %n");
-        log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
     public DatabaseHandler(NotificationBank notification_bank) { 
@@ -633,13 +630,13 @@ public class DatabaseHandler {
     	boolean successfulBooking = false;
         try {
             conn = datasource.getConnection();
-            System.out.println("connection made");
+            //System.out.println("connection made");
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id FROM trojanrec.timeslot "
                     		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
             ResultSet rs = pst.executeQuery();
-            System.out.println("results gotten");
+            //System.out.println("results gotten");
             PreparedStatement pst_k, pst_j;
             ResultSet rs_k, rs_j;
             Statement stmt;
@@ -647,25 +644,27 @@ public class DatabaseHandler {
             int timeslot_id = -1;
 
             if(rs.next()){
-            	System.out.println("something in rs results");
+            	//System.out.println("something in rs results");
                 timeslot_id = rs.getInt("timeslot_id");
-                System.out.println("timeslot id: " + timeslot_id);
+                //System.out.println("timeslot id: " + timeslot_id);
                 
                 // fetch user
+                /*
                 System.out.print("user object is null? ");
                 System.out.println(user != null);
                 System.out.print("user net id is null? ");
                 System.out.println(user.getNetID() != null);
                 System.out.println("user id: " + user.getNetID());
+                */
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
                 		+ "WHERE net_id = '" + user.getNetID() + "'");
                 rs_k = pst_k.executeQuery();
-                System.out.println("rs_k results gotten");
+                //System.out.println("rs_k results gotten");
                 
 
                     if(rs_k.next()){
-                    	System.out.println("something in rs_k results");
+                    	//System.out.println("something in rs_k results");
                     	int userID = rs_k.getInt("user_id");
                     	
                         // query - if user already has made booking at that center/timedate
@@ -673,16 +672,16 @@ public class DatabaseHandler {
                         		+ "FROM trojanrec.booking "
                         		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                         rs_j = pst_j.executeQuery();
-                        System.out.println("rs_j results gotten");
+                        //System.out.println("rs_j results gotten");
                         int booking_made = 0;
                         if(rs_j.next()) {
-                        	System.out.println("something in rs_k results");
+                        	//System.out.println("something in rs_k results");
                         	booking_made = rs_j.getInt(1);
                         }                                            
                         // user doesn't have booking yet
-                        System.out.println("checking user booking status");
+                        //System.out.println("checking user booking status");
                         if(booking_made == 0) {
-                        	System.out.println("no booking exists");
+                        	//System.out.println("no booking exists");
                             String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) "
                             		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                             stmt = conn.createStatement();
