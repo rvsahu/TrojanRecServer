@@ -22,7 +22,7 @@ public class TRServerMain {
 	private static final String KILL_COMMAND = "kill -9 $(lsof -t -i:" + SOCKET_PORT + ")";
 	
 	public static void main(String[] args) {
-		System.out.println("Killing any existing processes on the port.");
+		System.out.println("Killing any existing processes on port " + SOCKET_PORT + ".");
 		/*
 		try {
 			Process p = Runtime.getRuntime().exec(KILL_COMMAND);
