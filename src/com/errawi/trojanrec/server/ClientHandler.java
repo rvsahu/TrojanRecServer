@@ -488,22 +488,4 @@ public class ClientHandler extends Thread {
 	private ServerResponse createBookingExistsResponse() {
 		return new ServerResponse(ResponseType.BOOKING_EXISTS);
 	}
-	
-	/**
-	 * Sends a NO_ACTION response back to the client, and returns whether sending it was
-	 * successful or not
-	 * 
-	 * @return     True if a NO_ACTION response was sent successfully, false otherwise.
-	 */
-	private boolean sendNoActionResponse() {
-		ServerResponse response = new ServerResponse(ResponseType.NO_ACTION);
-		try {
-			oos.writeObject(response); //send NO_ACTION response
-			return true;
-		} catch (IOException ioe) {
-			//couldn't successfully send back response, return false
-			ioe.printStackTrace();
-			return false;
-		}
-	}
 }
