@@ -276,12 +276,12 @@ public class ClientHandler extends Thread {
 					System.out.println(", time slot: " + res.getTimedate());
 					//first check if the booking already exists
 					if (dbHandler.bookingEntryExists(res, currUser)) {
-						//booking already exists, send a NO_ACTION back
-						System.out.println(id + " - Make bookings bad, booking exists, send no action response");
-						currResp = createNoActionResponse();
+						//booking already exists, send a BOOKING_EXISTS back
+						System.out.println(id + " - Make bookings bad, booking exists, send booking exists response"); 
+						currResp = createBookingExistsResponse();
 					} else if (dbHandler.isCapMax(res)) { //then check if slot is full
-						System.out.println(id + " - Make bookings bad, slot full, send fail response"); //TODO: log this to a file
-						currResp = createFailResponse();
+						System.out.println(id + " - Make bookings bad, slot full, send no action response"); //TODO: log this to a file
+						currResp = createNoActionResponse();
 					} else {
 						//then try and make booking
 						boolean success = dbHandler.makeBooking(res, currUser);
@@ -318,13 +318,13 @@ public class ClientHandler extends Thread {
 					//first check if the wait list already exists
 					if (dbHandler.waitlistEntryExists(res, currUser)) {
 						//wait list entry already exists, send a NO_ACTION back
-						System.out.println(id + " - Join wait list bad, wait lest entry exists, send no action response");
+						System.out.println(id + " - Join wait list bad, wait list entry exists, send no action response");
 						currResp = createNoActionResponse();
 						continue; //await next message
 					} else if (dbHandler.bookingEntryExists(res, currUser)) { //then check if a booking already exists (no reason to add to waitlist if a booking is already made)
-						//wait list entry already exists, send a NO_ACTION back
-						System.out.println(id + " - Join wait list bad, booking for user exists, send no action response");
-						currResp = createNoActionResponse();
+						//wait list entry already exists, send a BOOKIG_EXISTS back
+						System.out.println(id + " - Join wait list bad, booking for user exists, send booking exists response");
+						currResp = createBookingExistsResponse();
 					} else {
 						//then join wait list
 						boolean success = dbHandler.addToWaitlist(res, currUser);
@@ -478,5 +478,14 @@ public class ClientHandler extends Thread {
 	 */
 	private ServerResponse createNoActionResponse() {
 		return new ServerResponse(ResponseType.NO_ACTION);
+	}
+	
+	/**
+	 * Creates a BOOKING_EXISTS response to be sent back to the client.
+	 * 
+	 * @return     A new BOOKING_EXISTS response
+	 */
+	private ServerResponse createBookingExistsResponse() {
+		return new ServerResponse(ResponseType.BOOKING_EXISTS);
 	}
 }
