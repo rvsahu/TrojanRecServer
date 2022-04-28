@@ -13,7 +13,7 @@ import com.errawi.trojanrec.utils.NotificationBank;
 import java.util.concurrent.ExecutorService;
 
 public class TRServerMain {
-	public static final int SOCKET_PORT = 1338;
+	public static final int SOCKET_PORT = 4000;
 	
 	/**
 	 * CL code to kill anything listening on the port
