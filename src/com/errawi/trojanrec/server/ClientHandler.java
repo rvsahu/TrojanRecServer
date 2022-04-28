@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.errawi.trojanrec.utils.*;
 
@@ -33,6 +34,13 @@ public class ClientHandler extends Thread {
 	 * and database while preventing race conditions.
 	 */
 	private DatabaseHandler dbHandler;
+	
+	/**
+	 * (Synchronised) notification bank that all ClientHandlers can check
+	 * to see if the client they service has wait list entries that they can
+	 * now make bookings for.
+	 */
+	private NotificationBank notifBank;
 
 	/**
 	 * User object representing the User that is logged into the (Android) TrojanRec
@@ -54,11 +62,12 @@ public class ClientHandler extends Thread {
 	 */
 	private int id;
 	
-	public ClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
+	public ClientHandler(Socket socket, DatabaseHandler dbHandler, NotificationBank notifBank, int id) {
 		this.id = id;
 		this.socket = socket;
 		userAuthenticated = false;
 		this.dbHandler = dbHandler;
+		this.notifBank = notifBank;
 		try {
 			ois = new ObjectInputStream(socket.getInputStream());
 			oos = new ObjectOutputStream(socket.getOutputStream());
@@ -86,36 +95,59 @@ public class ClientHandler extends Thread {
 				//complete handshake
 				System.out.println(id + " - Connect good"); //TODO: log this to a file
 				currResp = new ServerResponse(ResponseType.CONNECTED);
-				oos.writeObject(currResp);
 			} else {
 				System.out.println(id + " - Connect bad"); //TODO: log this to a file
 				//received another request when it should have been CONNECT
 				//send a CLOSED type server response and close connection
-				sendClosedResponse();
+				currResp = createClosedResponse();
 				//exit run() (which ends thread)
+				return;
+			}
+			oos.writeObject(currResp);
+			if (currResp.responseType() == ResponseType.CLOSED) {
+				socket.close();
 				return;
 			}
 		} catch (ClassCastException cce) {
 			//object sent was not a ClientRequest
 			//send a CLOSED type server response and close connection
-			System.out.println(id + " - Connect bad"); //TODO: log this to a file
-			sendClosedResponse();
-			//exit run() (which ends thread)
-			return;
+			System.out.println(id + " - Connect bad, bad casting"); //TODO: log this to a file
+			try {
+				oos.writeObject(createClosedResponse()); //send CLOSED response
+				socket.close(); //close socket
+			} catch (IOException inner_ioe) {
+				System.out.println("Additional IO Exception while handling exception");
+			}
+			return; //exit run() (which ends thread)
 		} catch (ClassNotFoundException cnfe) {
 			//not quite sure how we would get here but compiler says need to check for it
 			//send a CLOSED type server response and close connection
-			System.out.println(id + " - Connect bad"); //TODO: log this to a file
-			sendClosedResponse();
-			//exit run() (which ends thread)
-			return;
+			System.out.println(id + " - Connect bad, class nonexistent"); //TODO: log this to a file
+			try {
+				oos.writeObject(createClosedResponse()); //send CLOSED response
+				socket.close(); //close socket
+			} catch (IOException inner_ioe) {
+				System.out.println("Additional IO Exception while handling exception");
+			}
+			return; //exit run() (which ends thread)
 		} catch (EOFException eofe) {
 			System.out.println(id + " - Client disconnected"); //TODO: log this to a file
 			//eofe.printStackTrace();
+			try {
+				socket.close(); //close socket
+			} catch (IOException inner_ioe) {
+				System.out.println("Additional IO Exception while handling exception");
+			}
+			return; //exit run() (which ends thread)
 		} catch (IOException ioe) {
 			System.out.println(id + " - Connect bad"); //TODO: log this to a file
 			ioe.printStackTrace();
-			return;
+			try {
+				socket.close(); //close socket
+			} catch (IOException inner_ioe) {
+				System.out.println("Additional IO Exception while handling exception");
+			}
+			return; //exit run() (which ends thread)
 		} 
 		
 		//connection successful. now thread enters main loop where it handles
@@ -126,7 +158,8 @@ public class ClientHandler extends Thread {
 				System.out.print(id + " - new request recieved: ");
 				if (currReq == null) {
 					System.out.println("Null request, send fail response");
-					sendFailResponse();
+					currResp = createFailResponse();
+					oos.writeObject(currResp);
 					continue;
 				}
 				currFunc = currReq.getFunction();
@@ -137,32 +170,27 @@ public class ClientHandler extends Thread {
 						System.out.println(id + " - Already logged in"); //TODO: log this to a file
 						//send AUTHENTICATED response
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
-						oos.writeObject(currResp);
-						continue;
-					}
-					//check user is non-null
-					if (currReq.getUser() == null) {
+					} else if (currReq.getUser() == null) { //check user is non-null
 						//user is null, send UNAUTHENTICATED response
 						System.out.println(id + " - Login bad - null user"); //TODO: log this to a file
-						sendUnauthenticatedResponse();
-						continue;
-					}
-					//authenticate user
-					userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
-					//check if successful or not
-					if (userAuthenticated) {
-						System.out.println(id + " - Login good"); //TODO: log this to a file
-						//send AUTHENTICATED response
-						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
-						oos.writeObject(currResp);		
+						currResp = createUnauthenticatedResponse();
 					} else {
-						//send UNAUTHENTICATED response
-						System.out.println(id + " - Login bad"); //TODO: log this to a file
-						sendUnauthenticatedResponse();
+						//authenticate user
+						userAuthenticated = dbHandler.authenticateUser(currReq.getUser().getNetID(), currReq.getUserPassword());
+						//check if successful or not
+						if (userAuthenticated) {
+							System.out.println(id + " - Login good"); //TODO: log this to a file
+							//send AUTHENTICATED response
+							currResp = new ServerResponse(ResponseType.AUTHENTICATED);
+						} else {
+							//send UNAUTHENTICATED response
+							System.out.println(id + " - Login bad"); //TODO: log this to a file
+							currResp = createUnauthenticatedResponse();
+						}
 					}
 				} else if (currFunc == ServerFunction.CLOSE) {
 					System.out.println("Close request"); //TODO: log this to a file
-					sendClosedResponse(); //kill thread once client connection it handles is closed
+					currResp = createClosedResponse(); //kill thread once client connection it handles is closed
 					System.out.println(id + " - Close request good"); //TODO: log this to a file
 					return; //exit thread once socket closed
 				} else if (currFunc == ServerFunction.CHECK_IF_LOGGED_IN) {
@@ -170,15 +198,14 @@ public class ClientHandler extends Thread {
 					if (userAuthenticated) {
 						System.out.println(id + " - Check login good"); //TODO: log this to a file
 						currResp = new ServerResponse(ResponseType.AUTHENTICATED);
-						oos.writeObject(currResp);		
 					} else {
 						System.out.println(id + " - Check login bad"); //TODO: log this to a file
-						sendUnauthenticatedResponse();
+						currResp = createUnauthenticatedResponse();
 					}
 				} else if (!userAuthenticated) {
 					//return UNAUTHENTICATED response, meaning the server
 					//will not perform the client request because the User is not logged in
-					sendUnauthenticatedResponse();
+					currResp = createUnauthenticatedResponse();
 				} else if (currFunc == ServerFunction.GET_PROFILE_INFO) {
 					//get server side User object from client side user's net ID
 					System.out.println("Profile attempt"); //TODO: log this to a file
@@ -187,61 +214,56 @@ public class ClientHandler extends Thread {
 					if (serverSideUser.getStudentID() != -1) {
 						System.out.println(id + " - Profile good"); //TODO: log this to a file
 						//send server side user back to client
-						currResp = new ServerResponse(ResponseType.SUCCESS); //create response with SUCCESS type
+						currResp = createSuccessResponse(); //create response with SUCCESS type
 						currResp.setUser(serverSideUser); //add server-side user to response
-						oos.writeObject(currResp); //send response
 					} else {
 						System.out.println(id + " - Profile bad"); //TODO: log this to a file
 						//send fail response back to client
-						sendFailResponse();
+						currResp = createFailResponse();
 					}
 				} else if (currFunc == ServerFunction.GET_CURRENT_BOOKINGS) {
 					System.out.println("Current bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
 					if(reservations != null) {
 						System.out.println(id + " - Current bookings good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(reservations);	
-						oos.writeObject(currResp);					
 					} else {
 						System.out.println(id + " - Current bookings bad"); //TODO: log this to a file
-						sendFailResponse();
+						currResp = createFailResponse();
 					}									
 				} else if (currFunc == ServerFunction.GET_PREVIOUS_BOOKINGS) {
 					System.out.println("Previous bookings attempt"); //TODO: log this to a file
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
 						System.out.println(id + " - Previous bookings good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(reservations);	
-						oos.writeObject(currResp);	
 					} else {
 						System.out.println(id + " - Previous bookings bad"); //TODO: log this to a file
-						sendFailResponse();
+						currResp = createFailResponse();
 					}	
 				} else if (currFunc == ServerFunction.GET_WAIT_LIST) {
 					System.out.println("Wait list attempt"); //TODO: log this to a file
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
 						System.out.println(id + " - Wait list good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(waitlist_reservations);
-						oos.writeObject(currResp);	
 					} else {
 						System.out.println(id + " - Wait list bad"); //TODO: log this to a file
-						sendFailResponse();
+						currResp = createFailResponse();
 					}
 				} else if (currFunc == ServerFunction.GET_CENTRE_TIME_SLOTS) {
 					System.out.println("Get slots attempt"); //TODO: log this to a file
 					ArrayList<String> timeslots = dbHandler.getFutureCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
 						System.out.println(id + " - Get slots good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setTimeslots(timeslots);
-						oos.writeObject(currResp);		
 					} else {
 						System.out.println(id + " - Get slots bad"); //TODO: log this to a file
-						sendFailResponse();
+						currResp = createFailResponse();
 					}
 				} else if (currFunc == ServerFunction.MAKE_BOOKING) {
 					System.out.print("Make booking attempt "); //TODO: log this to a file
@@ -254,32 +276,29 @@ public class ClientHandler extends Thread {
 					System.out.println(", time slot: " + res.getTimedate());
 					//first check if the booking already exists
 					if (dbHandler.bookingEntryExists(res, currUser)) {
-						//booking already exists, send a NO_ACTION back
-						System.out.println(id + " - Make bookings bad, booking exists, send no action response");
-						sendNoActionResponse();
-						continue; //await next message
-					}
-					//then check if slot is full
-					if (dbHandler.isCapMax(res)) {
-						System.out.println(id + " - Make bookings bad, slot full, send fail response"); //TODO: log this to a file
-						sendFailResponse();
-						continue; //await next message
-					}
-					//then try and make booking
-					boolean success = dbHandler.makeBooking(res, currUser);
-					System.out.print(id + " - Make bookings "); //TODO: log this to a file
-					if (success) {
-						//booking was successful, we should remove a wait list entry for this reservation if it exists
-						if (dbHandler.waitlistEntryExists(res, currUser)) {
-							//a wait list entry exists for this reservation (and this user), now remove it since booking was made
-							dbHandler.removeWaitlistEntry(res, currUser);
-						}
-						//should send success response in either case
-						System.out.println("good, send success response");
-						oos.writeObject(new ServerResponse(ResponseType.SUCCESS));
+						//booking already exists, send a BOOKING_EXISTS back
+						System.out.println(id + " - Make bookings bad, booking exists, send booking exists response"); 
+						currResp = createBookingExistsResponse();
+					} else if (dbHandler.isCapMax(res)) { //then check if slot is full
+						System.out.println(id + " - Make bookings bad, slot full, send no action response"); //TODO: log this to a file
+						currResp = createNoActionResponse();
 					} else {
-						System.out.println("bad, send fail response");
-						sendFailResponse();
+						//then try and make booking
+						boolean success = dbHandler.makeBooking(res, currUser);
+						System.out.print(id + " - Make bookings "); //TODO: log this to a file
+						if (success) {
+							//booking was successful, we should remove a wait list entry for this reservation if it exists
+							if (dbHandler.waitlistEntryExists(res, currUser)) {
+								//a wait list entry exists for this reservation (and this user), now remove it since booking was made
+								dbHandler.removeWaitlistEntry(res, currUser);
+							}
+							//should send success response in either case
+							System.out.println("good, send success response");
+							currResp = createSuccessResponse();
+						} else {
+							System.out.println("bad, send fail response");
+							currResp = createFailResponse();
+						}
 					}
 				} else if (currFunc == ServerFunction.CANCEL_BOOKING) {
 					System.out.println("Cancel bookings attempt"); //TODO: log this to a file
@@ -287,9 +306,8 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					dbHandler.removeBooking(res, currReq.getUser());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
-					oos.writeObject(currResp);
-					System.out.println(id + " - Current bookings good (in theory)"); //TODO: log this to a file
+					currResp = createSuccessResponse();
+					System.out.println(id + " - Cancel bookings good (in theory)"); //TODO: log this to a file
 				} else if (currFunc == ServerFunction.JOIN_WAIT_LIST) {
 					System.out.println("Join waitlist attempt"); //TODO: log this to a file
 					//TODO: modify client side code to send a reservation rather than construct one here
@@ -297,121 +315,178 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					User currUser = currReq.getUser();
-					//first check if the booking already exists
+					//first check if the wait list already exists
 					if (dbHandler.waitlistEntryExists(res, currUser)) {
-						//booking already exists, send a NO_ACTION back
-						System.out.println(id + " - Join wait list bad, entry exists, send no action response");
-						sendNoActionResponse();
+						//wait list entry already exists, send a NO_ACTION back
+						System.out.println(id + " - Join wait list bad, wait list entry exists, send no action response");
+						currResp = createNoActionResponse();
 						continue; //await next message
+					} else if (dbHandler.bookingEntryExists(res, currUser)) { //then check if a booking already exists (no reason to add to waitlist if a booking is already made)
+						//wait list entry already exists, send a BOOKING_EXISTS back
+						System.out.println(id + " - Join wait list bad, booking for user exists, send booking exists response");
+						currResp = createBookingExistsResponse();
+					} else {
+						//then join wait list
+						boolean success = dbHandler.addToWaitlist(res, currUser);
+						System.out.println(id + " - Join wait list good"); //TODO: log this to a file
+						if (success) {
+							currResp = createSuccessResponse(); //create success response to send back
+						} else {
+							currResp = createFailResponse(); //create fail response to send back
+						}
 					}
-					//then join wait list (this should never fail)
-					dbHandler.addToWaitlist(res, currUser);
-					System.out.println(id + " - Join wait list good"); //TODO: log this to a file
-					oos.writeObject(new ServerResponse(ResponseType.SUCCESS)); //sends SUCCESS response back
 				} else if (currFunc == ServerFunction.CANCEL_WAIT_LIST) {
 					System.out.println("Cancel waitlist attempt"); //TODO: log this to a file
 					Reservation res = new Reservation();
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
-					//check whether the waitlist entry we're trying to remove actually exists
+					//check whether the wait list entry we're trying to remove actually exists
 					boolean entryExists = dbHandler.waitlistEntryExists(res, currReq.getUser());
 					if (entryExists) {
 						//entry exists, remove it
 						boolean removed = dbHandler.removeWaitlistEntry(res, currReq.getUser());
 						if (removed) {
-							currResp = new ServerResponse(ResponseType.SUCCESS);
-							oos.writeObject(currResp);
+							currResp = createSuccessResponse();
 						} else {
-							sendFailResponse();
+							currResp = createFailResponse();
 						}
 					} else {
 						//entry doesn't exist, send response to client saying no action was taken
-						sendNoActionResponse();
+						currResp = createNoActionResponse();
 					}
 					
+				}
+				
+				//check notification bank for user's notifs, given they're authenticated
+				System.out.println(id + " - Checking for notifs");
+				if (userAuthenticated && currReq.getUser() != null) {
+					List<Reservation> userOpenedSlots = notifBank.getUserNotifs(currReq.getUser().getNetID());
+					if (userOpenedSlots != null && userOpenedSlots.size() != 0) {
+						System.out.println(id + " - Client has available slots!");
+						//user is wait listed for slots that had opened, put in response before sending it back
+						currResp.setOpenedSlots(userOpenedSlots);
+					}
+				}
+				//send back current response
+				System.out.println(id + " - Sending response");
+				oos.writeObject(currResp);
+				//close socket if need to
+				if (currResp.responseType() == ResponseType.CLOSED) {
+					socket.close(); //close socket
+					return; //exit run() (which ends thread)
 				}
 			} catch (ClassCastException cce) {
 				//object sent was not a ClientRequest
 				//send a CLOSED type server response and close connection
-				sendClosedResponse();
-				//exit run() (which ends thread)
-				return;
+				try {
+					oos.writeObject(createClosedResponse()); //send CLOSED response
+					socket.close(); //close socket
+				} catch (IOException inner_ioe) {
+					System.out.println("Additional IO Exception while handling exception");
+				}
+				return; //exit run() (which ends thread)
 			} catch (ClassNotFoundException cnfe) {
 				//not quite sure how we would get here but compiler says need to check for it
 				//send a CLOSED type server response and close connection
-				sendClosedResponse();
-				//exit run() (which ends thread)
-				return;
+				try {
+					oos.writeObject(createClosedResponse()); //send CLOSED response
+					socket.close(); //close socket
+				} catch (IOException inner_ioe) {
+					System.out.println("Additional IO Exception while handling exception");
+				}
+				return; //exit run() (which ends thread)
 			} catch (EOFException eofe) {
 				System.out.println(id + " - Client disconnected"); //TODO: log this to a file
-				//eofe.printStackTrace();
-				return;
+				try {
+					socket.close(); //close socket
+				} catch (IOException inner_ioe) {
+					System.out.println("Additional IO Exception while handling exception");
+				}
+				return; //exit run() (which ends thread)
 			} catch (SocketException se) {
-				System.out.println(id + " - connection reset"); //TODO log to a file
-				return;
+				System.out.println(id + " - Connection reset"); //TODO log to a file
+				se.printStackTrace();
+				try {
+					socket.close(); //close socket
+				} catch (IOException inner_ioe) {
+					System.out.println("Additional IO Exception while handling exception");
+				}
+				return; //exit run() (which ends thread)
 			} catch (IOException ioe) {
 				//some error reading from input stream. errors sending back would be handled
 				//further in. we should print stack trace and then end this thread.
 				ioe.printStackTrace();
-				return;
+				try {
+					socket.close(); //close socket
+				} catch (IOException inner_ioe) {
+					System.out.println("Additional IO Exception while handling exception");
+				}
+				return; //exit run() (which ends thread)
 			}
 		}
 	}
 	
 	/**
-	 * Below are cookie-cutter responses that may need to be sent, specifically
-	 * FAIL, CLOSED, NO_ACTION, and UNAUTHENTICATED. This may not be as useful for some of
-	 * the other response types as extra information would be added to the
-	 * ServerResponse objects. 
+	 * Below are generators for cookie-cutter response that may need to be sent.
+     * The utility of these in the past was that they actually sent the responses back too,
+     * but now since we always check for notifications before sending something over, they just 
+     * create a blank object and really it's debatable if we need methods for them. But since
+     * they're here may as well use them. 
 	 */
 	
 	/**
-	 * Sends a server response with type UNAUTHENTICATED back to the client
+	 * Creates a SUCCESS response to be sent back to the client.
 	 * 
-	 * @return     True if it could be sent back successfully, false otherwise.
+	 * @return     A new SUCCESS response
 	 */
-	private boolean sendUnauthenticatedResponse() {
-		ServerResponse response = new ServerResponse(ResponseType.UNAUTHENTICATED);
-		try {
-			oos.writeObject(response); //send UNAUTHENTICATED response
-			return true;
-		} catch (IOException ioe) {
-			//couldn't successfully send back response, just return
-			ioe.printStackTrace();
-			return false;
-		}
+	private ServerResponse createSuccessResponse() {
+		return new ServerResponse(ResponseType.SUCCESS);
 	}
 	
 	/**
-	 * Sends a CLOSED response back to the client, and then closes the socket
+	 * Creates a UNAUTHENTICATED response to be sent back to the client.
+	 * 
+	 * @return     A new UNAUTHENTICATED response
 	 */
-	private void sendClosedResponse() {
-		ServerResponse response = new ServerResponse(ResponseType.CLOSED);
-		try {
-			oos.writeObject(response); //send CLOSED response
-			socket.close(); //close socket
-		} catch (IOException ioe) {
-			//couldn't successfully send back response, just return
-			ioe.printStackTrace();
-		}
+	private ServerResponse createUnauthenticatedResponse() {
+		return new ServerResponse(ResponseType.UNAUTHENTICATED);
 	}
 	
 	/**
-	 * Sends a FAIL response back to the client, and returns whether sending it was
-	 * successful or not
+	 * Creates a CLOSED response to be sent back to the client.
 	 * 
-	 * @return     True if a FAIL response was sent successfully, false otherwise.
+	 * @return     A new CLOSED response
 	 */
-	private boolean sendFailResponse() {
-		ServerResponse response = new ServerResponse(ResponseType.FAIL);
-		try {
-			oos.writeObject(response); //send FAIL response
-			return true;
-		} catch (IOException ioe) {
-			//couldn't successfully send back response, return false
-			ioe.printStackTrace();
-			return false;
-		}
+	private ServerResponse createClosedResponse() {
+		return new ServerResponse(ResponseType.CLOSED);
+		
+	}
+	
+	/**
+	 * Creates a FAIL response to be sent back to the client.
+	 * 
+	 * @return     A new FAIL response
+	 */
+	private ServerResponse createFailResponse() {
+		return new ServerResponse(ResponseType.FAIL);
+	}
+	
+	/**
+	 * Creates a NO_ACTION response to be sent back to the client.
+	 * 
+	 * @return     A new NO_ACTION response
+	 */
+	private ServerResponse createNoActionResponse() {
+		return new ServerResponse(ResponseType.NO_ACTION);
+	}
+	
+	/**
+	 * Creates a BOOKING_EXISTS response to be sent back to the client.
+	 * 
+	 * @return     A new BOOKING_EXISTS response
+	 */
+	private ServerResponse createBookingExistsResponse() {
+		return new ServerResponse(ResponseType.BOOKING_EXISTS);
 	}
 	
 	/**

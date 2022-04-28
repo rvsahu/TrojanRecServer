@@ -7,6 +7,9 @@ import java.net.SocketException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
+
+import com.errawi.trojanrec.utils.NotificationBank;
+
 import java.util.concurrent.ExecutorService;
 
 public class TRServerMain {
@@ -20,6 +23,7 @@ public class TRServerMain {
 	
 	public static void main(String[] args) {
 		System.out.println("Killing any existing processes on the port.");
+		/*
 		try {
 			Process p = Runtime.getRuntime().exec(KILL_COMMAND);
 			p.waitFor();
@@ -32,10 +36,13 @@ public class TRServerMain {
 		} catch (InterruptedException ie) {
 			System.err.println("Interrupted while killing existing processes on port " + SOCKET_PORT +"!");
 		}
+		*/
+		System.out.println("Creating notification bank...");
+		NotificationBank notifBank = new NotificationBank();
 		System.out.println("Initialising data handlers...");
 		List<ClientHandler> clientHandlers = new ArrayList<>(); 
 		ExecutorService clientExecutor = Executors.newCachedThreadPool(); 
-		DatabaseHandler databaseHandler = new DatabaseHandler();
+		DatabaseHandler databaseHandler = new DatabaseHandler(notifBank);
 		
 		//declare a server socket for this program, will be initialised later
 		ServerSocket serverSocket = null;
@@ -64,7 +71,7 @@ public class TRServerMain {
 		while (serverSocket != null) { 
 			try {
 				Socket newSocket = serverSocket.accept();
-				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, ++connections);
+				ClientHandler newCH = createClientHandler(newSocket, databaseHandler, notifBank, ++connections);
 				clientHandlers.add(newCH);
 				clientExecutor.submit(newCH); 
 			} catch (IOException ioe) {
@@ -79,9 +86,9 @@ public class TRServerMain {
 		closeSocket(serverSocket);
 	}
 	
-	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler, int id) {
+	private static ClientHandler createClientHandler(Socket socket, DatabaseHandler dbHandler, NotificationBank notifBank, int id) {
 		System.out.println("New client connection!"); //TODO: output to a log file too
-		return new ClientHandler(socket, dbHandler, id);
+		return new ClientHandler(socket, dbHandler, notifBank, id);
 	}
 	
 	private static void closeSocket(ServerSocket serverSocket) {

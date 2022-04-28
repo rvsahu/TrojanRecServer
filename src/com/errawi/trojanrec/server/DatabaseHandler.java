@@ -3,6 +3,7 @@ package com.errawi.trojanrec.server;
 
 import com.errawi.trojanrec.utils.User;
 import com.errawi.trojanrec.utils.Reservation;
+import com.errawi.trojanrec.utils.NotificationBank;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
@@ -13,11 +14,11 @@ import java.text.SimpleDateFormat;
 
 
 public class DatabaseHandler {
-
     String properties_file;
     HikariConfig config;
     HikariDataSource datasource;
     Connection conn;
+    NotificationBank notification_bank;
     PreparedStatement pst;
     ResultSet rs;
 
@@ -27,11 +28,12 @@ public class DatabaseHandler {
         log = Logger.getLogger(DatabaseHandler.class.getName());
     }
 
-    public DatabaseHandler() {
+    public DatabaseHandler(NotificationBank notification_bank) { 
         properties_file = "db.properties";
         config = new HikariConfig(properties_file);
         datasource = new HikariDataSource(config);
         conn = null;
+        this.notification_bank = notification_bank;
     }
     
     public synchronized HikariDataSource datasource() {
@@ -198,9 +200,11 @@ public class DatabaseHandler {
             ResultSet rs = pst.executeQuery();
 
             if(rs.next()) {
+            	System.out.println("valid reservation given");
                 return true;
             }
-            // no user was present in ResultSet, reservation does not exist
+            // no reservation was present in ResultSet, reservation does not exist
+            System.out.println("bad reservation given");
             return false;
             
         }
@@ -402,6 +406,69 @@ public class DatabaseHandler {
         }
         return timeslots;
     }
+    
+    /**
+    *
+    * @param center_id  The rec center's id: 1 is Lyon, 2 is Cromwell, 3 is Village
+    * @return     String printout of timeslots occurring in the future
+    *
+    */
+   public synchronized ArrayList<String> getFutureCenterTimeslots(int center_id){
+   	
+       if(center_id != 1 && center_id != 2 && center_id != 3) {
+       	return null;
+       }
+       
+       SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+       String date_now = formatter.format(new Date(System.currentTimeMillis()));
+       
+       ArrayList<String> timeslots = new ArrayList<>();
+       
+       try {
+           conn = datasource.getConnection();
+
+           PreparedStatement pst = conn.prepareStatement
+                   ("SELECT reservation_time "
+                   		+ "FROM trojanrec.timeslot "
+                   		+ "WHERE center_id = '" + center_id 
+                   		+ "' ORDER BY reservation_time");
+           ResultSet rs = pst.executeQuery();
+
+           // Use setters defined in User class
+           while(rs.next()){
+
+               int compare = date_now.compareTo(rs.getString("reservation_time"));
+               // if current datetime is less than to a reservation time, reservation is in future
+               if(compare < 0){
+                   timeslots.add(rs.getString("reservation_time"));
+               }
+
+           	
+           }
+       }
+       catch(SQLException e) {
+           System.out.println("SQLException Message: " + e.getMessage());
+           timeslots = null;
+       }
+       finally {
+           try{
+               if(rs != null){
+                   rs.close();
+               }
+               if(pst != null){
+                   pst.close();
+               }
+               if(conn != null){
+                   conn.close();
+               }
+           }
+           catch(SQLException e){
+               System.out.println("SQLException Message: " + e.getMessage());
+               timeslots = null;
+           }
+       }
+       return timeslots;
+   }
 
     public synchronized ArrayList<String> getFutureCenterTimeslots(int center_id){       	
         if(center_id != 1 && center_id != 2 && center_id != 3) {
@@ -529,13 +596,13 @@ public class DatabaseHandler {
      * @param user       User to add to waitlist table
      *
      */
-    public synchronized void addToWaitlist(Reservation reservation, User user) {
-    	
+    public synchronized boolean addToWaitlist(Reservation reservation, User user) {
     	boolean exists = timeslotExists(reservation);
     	if(!exists) {
-    		return;
+    		return false;
     	}
     	
+    	boolean added = false;
         try {
             conn = datasource.getConnection();
 
@@ -573,7 +640,8 @@ public class DatabaseHandler {
                         String sql = "INSERT INTO trojanrec.waitlist(timeslot_id, user_id) "
                         		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                         stmt = conn.createStatement();
-                        stmt.executeUpdate(sql);                	
+                        stmt.executeUpdate(sql);
+                        added = true;
                     }
                     else {
                     	System.out.println("A user tried to make a duplicate waitlist booking - this is not allowed! No futher action is necessary :-)");
@@ -601,6 +669,7 @@ public class DatabaseHandler {
                 System.out.println("SQLException Message: " + e.getMessage());
             }
         }
+        return added;
     }
 
     /**
@@ -619,13 +688,13 @@ public class DatabaseHandler {
     	boolean successfulBooking = false;
         try {
             conn = datasource.getConnection();
-
+            System.out.println("connection made");
             PreparedStatement pst = conn.prepareStatement
                     ("SELECT timeslot_id FROM trojanrec.timeslot "
                     		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
             ResultSet rs = pst.executeQuery();
-
+            System.out.println("results gotten");
             PreparedStatement pst_k, pst_j;
             ResultSet rs_k, rs_j;
             Statement stmt;
@@ -633,18 +702,25 @@ public class DatabaseHandler {
             int timeslot_id = -1;
 
             if(rs.next()){
+            	System.out.println("something in rs results");
                 timeslot_id = rs.getInt("timeslot_id");
+                System.out.println("timeslot id: " + timeslot_id);
                 
                 // fetch user
+                System.out.print("user object is null? ");
+                System.out.println(user != null);
+                System.out.print("user net id is null? ");
+                System.out.println(user.getNetID() != null);
+                System.out.println("user id: " + user.getNetID());
                 pst_k = conn.prepareStatement("SELECT user_id "
                 		+ "FROM trojanrec.userinfo "
                 		+ "WHERE net_id = '" + user.getNetID() + "'");
                 rs_k = pst_k.executeQuery();
-                
+                System.out.println("rs_k results gotten");
                 
 
                     if(rs_k.next()){
-                    	
+                    	System.out.println("something in rs_k results");
                     	int userID = rs_k.getInt("user_id");
                     	
                         // query - if user already has made booking at that center/timedate
@@ -652,12 +728,16 @@ public class DatabaseHandler {
                         		+ "FROM trojanrec.booking "
                         		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                         rs_j = pst_j.executeQuery();
+                        System.out.println("rs_j results gotten");
                         int booking_made = 0;
                         if(rs_j.next()) {
+                        	System.out.println("something in rs_k results");
                         	booking_made = rs_j.getInt(1);
                         }                                            
                         // user doesn't have booking yet
-                        if(booking_made == 0) {                                                 
+                        System.out.println("checking user booking status");
+                        if(booking_made == 0) {
+                        	System.out.println("no booking exists");
                             String sql = "INSERT INTO trojanrec.booking(timeslot_id, user_id) "
                             		+ "VALUES ('" + timeslot_id + "', '" + rs_k.getInt("user_id") + "')";
                             stmt = conn.createStatement();
@@ -712,17 +792,25 @@ public class DatabaseHandler {
    		   System.out.println("Reservation does not exist");
    		   return false;
 	   }
-   	
+	   
+	   boolean wasCap;
+	   if(isCapMax(reservation)) {
+		    wasCap = true;
+	   }
+	   else {
+		   wasCap = false;
+	   }
+	   
        try {
            conn = datasource.getConnection();
-
+           System.out.println("dbhandler - connection made");
            PreparedStatement pst = conn.prepareStatement
                    ("SELECT timeslot_id "
                    		+ "FROM trojanrec.timeslot "
                    		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
 
            ResultSet rs = pst.executeQuery();
-
+           System.out.println("dbhandler - rs gotten");
            PreparedStatement pst_k, pst_j;
            ResultSet rs_k, rs_j;
            Statement stmt;
@@ -730,6 +818,7 @@ public class DatabaseHandler {
            int timeslot_id = -1;
 
            if(rs.next()){
+        	   System.out.println("dbhandler - entered rs if");
                timeslot_id = rs.getInt("timeslot_id");
                
                // fetch user
@@ -737,12 +826,11 @@ public class DatabaseHandler {
                		+ "FROM trojanrec.userinfo "
                		+ "WHERE net_id = '" + user.getNetID() + "'");
                rs_k = pst_k.executeQuery();
+               System.out.println("dbhandler - rs_k gotten");
                
-               
-
-                   if(rs_k.next()){
-                   	
-                   	int userID = rs_k.getInt("user_id");
+               if(rs_k.next()){
+            	   System.out.println("dbhandler - entered rs_k if");
+            	   int userID = rs_k.getInt("user_id");
                    	
                        // query - make sure user does have booking at that center/timedate
                    	   // might be redundant because client-side likely won't show the option to 
@@ -751,8 +839,10 @@ public class DatabaseHandler {
                        		+ "FROM trojanrec.booking "
                        		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
                        rs_j = pst_j.executeQuery();
+                       System.out.println("dbhandler - rs_j gotten");
                        int booking_made = 0;
                        if(rs_j.next()) {
+                    	   System.out.println("dbhandler - booking made");
                        	booking_made = rs_j.getInt(1);
                        }
                        
@@ -767,7 +857,13 @@ public class DatabaseHandler {
                            		+ "SET cap_curr = cap_curr - 1 "
                            		+ "WHERE timeslot_id = '" + timeslot_id + "'";
                            stmt = conn.createStatement();
-                           stmt.executeUpdate(sql);
+                           stmt.executeUpdate(sql);                         
+                           System.out.println("dbhandler - made booking");
+                           // if the Reservation was full, need to notify users on waitlist
+                           if(wasCap == true) {                      	
+                        	   System.out.println("dbhandler - adding to notif bank");
+                        	   notification_bank.addUserNotifs(getWaitlist(reservation), reservation);                   
+                           }
                            
                            return true;                       
                        }
@@ -1094,95 +1190,6 @@ public class DatabaseHandler {
         }
         return users;
     }
-    
-    /**
-    *
-    * @param Reservation  Reservation object containing the time/date and center
-    * @param user       User to remove waitlist booking for
-    *
-    */
-   public synchronized void removeWaitlistEntry(Reservation reservation, User user) {
-
-	   boolean exists = timeslotExists(reservation);
-	   if(!exists) {
-   		   System.out.println("Reservation does not exist");
-   		   return;
-	   }
-   	
-       try {
-           conn = datasource.getConnection();
-
-           PreparedStatement pst = conn.prepareStatement
-                   ("SELECT timeslot_id "
-                   		+ "FROM trojanrec.timeslot "
-                   		+ "WHERE center_id = '" + reservation.getRecCentre() + "' AND reservation_time = '" + reservation.getTimedate() + "'");
-
-           ResultSet rs = pst.executeQuery();
-
-           PreparedStatement pst_k, pst_j;
-           ResultSet rs_k, rs_j;
-           Statement stmt;
-           
-           int timeslot_id = -1;
-
-           if(rs.next()){
-               timeslot_id = rs.getInt("timeslot_id");
-               
-               // fetch user
-               pst_k = conn.prepareStatement("SELECT user_id "
-               		+ "FROM trojanrec.userinfo "
-               		+ "WHERE net_id = '" + user.getNetID() + "'");
-               rs_k = pst_k.executeQuery();
-               
-               
-
-                   if(rs_k.next()){
-                   	
-                   	int userID = rs_k.getInt("user_id");
-                   	
-                       pst_j = conn.prepareStatement("SELECT EXISTS(SELECT * "
-                       		+ "FROM trojanrec.waitlist "
-                       		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "')");                      
-                       rs_j = pst_j.executeQuery();
-                       int booking_made = 0;
-                       if(rs_j.next()) {
-                       	booking_made = rs_j.getInt(1);
-                       }
-                       
-                       // user has waitlist booking that can be deleted
-                       if(booking_made != 0) {                                                 
-                           String sql = "DELETE FROM trojanrec.waitlist "
-                           		+ "WHERE timeslot_id = '" + timeslot_id + "' AND user_id = '" + userID + "'";
-                           stmt = conn.createStatement();
-                           stmt.executeUpdate(sql);                                                
-                       }
-                       else {
-                       	System.out.println("A user tried to remove a waitlist entry, but they didn't have a waitlist spot - this is not allowed! No futher action is necessary :-)");
-                       }                  
-                   }             
-           }
-       }
-       catch(SQLException e) {
-           System.out.println("SQLException Message: " + e.getMessage());
-       }
-       finally {
-           try{
-               if(rs != null){
-                   rs.close();
-               }
-               if(pst != null){
-                   pst.close();
-               }
-               if(conn != null){
-                   conn.close();
-               }
-           }
-           catch(SQLException e){
-               System.out.println("SQLException Message: " + e.getMessage());
-           }
-       }
-	   
-   }
 
     /**
     *
