@@ -214,7 +214,7 @@ public class ClientHandler extends Thread {
 					if (serverSideUser.getStudentID() != -1) {
 						System.out.println(id + " - Profile good"); //TODO: log this to a file
 						//send server side user back to client
-						currResp = new ServerResponse(ResponseType.SUCCESS); //create response with SUCCESS type
+						currResp = createSuccessResponse(); //create response with SUCCESS type
 						currResp.setUser(serverSideUser); //add server-side user to response
 					} else {
 						System.out.println(id + " - Profile bad"); //TODO: log this to a file
@@ -226,7 +226,7 @@ public class ClientHandler extends Thread {
 					ArrayList<Reservation> reservations = dbHandler.getFutureBookings(currReq.getUser());
 					if(reservations != null) {
 						System.out.println(id + " - Current bookings good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(reservations);	
 					} else {
 						System.out.println(id + " - Current bookings bad"); //TODO: log this to a file
@@ -237,7 +237,7 @@ public class ClientHandler extends Thread {
 					ArrayList<Reservation> reservations = dbHandler.getPastBookings(currReq.getUser());
 					if(reservations != null) {
 						System.out.println(id + " - Previous bookings good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(reservations);	
 					} else {
 						System.out.println(id + " - Previous bookings bad"); //TODO: log this to a file
@@ -248,7 +248,7 @@ public class ClientHandler extends Thread {
 					ArrayList<Reservation> waitlist_reservations = dbHandler.getWaitlistForUser(currReq.getUser());
 					if(waitlist_reservations != null) {
 						System.out.println(id + " - Wait list good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setBookings(waitlist_reservations);
 					} else {
 						System.out.println(id + " - Wait list bad"); //TODO: log this to a file
@@ -259,7 +259,7 @@ public class ClientHandler extends Thread {
 					ArrayList<String> timeslots = dbHandler.getFutureCenterTimeslots(currReq.getRecCentre());
 					if(timeslots != null) {
 						System.out.println(id + " - Get slots good"); //TODO: log this to a file
-						currResp = new ServerResponse(ResponseType.SUCCESS);
+						currResp = createSuccessResponse();
 						currResp.setTimeslots(timeslots);
 					} else {
 						System.out.println(id + " - Get slots bad"); //TODO: log this to a file
@@ -294,7 +294,7 @@ public class ClientHandler extends Thread {
 							}
 							//should send success response in either case
 							System.out.println("good, send success response");
-							currResp = new ServerResponse(ResponseType.SUCCESS);
+							currResp = createSuccessResponse();
 						} else {
 							System.out.println("bad, send fail response");
 							currResp = createFailResponse();
@@ -306,7 +306,7 @@ public class ClientHandler extends Thread {
 					res.setRecCentre(currReq.getRecCentre());
 					res.setTimedate(currReq.getTimeslot());
 					dbHandler.removeBooking(res, currReq.getUser());
-					currResp = new ServerResponse(ResponseType.SUCCESS);
+					currResp = createSuccessResponse();
 					System.out.println(id + " - Cancel bookings good (in theory)"); //TODO: log this to a file
 				} else if (currFunc == ServerFunction.JOIN_WAIT_LIST) {
 					System.out.println("Join waitlist attempt"); //TODO: log this to a file
@@ -330,7 +330,7 @@ public class ClientHandler extends Thread {
 						boolean success = dbHandler.addToWaitlist(res, currUser);
 						System.out.println(id + " - Join wait list good"); //TODO: log this to a file
 						if (success) {
-							currResp = new ServerResponse(ResponseType.SUCCESS); //create success response to send back
+							currResp = createSuccessResponse(); //create success response to send back
 						} else {
 							currResp = createFailResponse(); //create fail response to send back
 						}
@@ -346,7 +346,7 @@ public class ClientHandler extends Thread {
 						//entry exists, remove it
 						boolean removed = dbHandler.removeWaitlistEntry(res, currReq.getUser());
 						if (removed) {
-							currResp = new ServerResponse(ResponseType.SUCCESS);
+							currResp = createSuccessResponse();
 						} else {
 							currResp = createFailResponse();
 						}
@@ -427,11 +427,21 @@ public class ClientHandler extends Thread {
 	}
 	
 	/**
-	 * Below are generators for cookie-cutter response that may need to be sent, specifically
-	 * FAIL, CLOSED, NO_ACTION, and UNAUTHENTICATED. This may not be as useful for some of
-	 * the other response types as extra information would be added to the
-	 * ServerResponse objects. 
+	 * Below are generators for cookie-cutter response that may need to be sent.
+     * The utility of these in the past was that they actually sent the responses back too,
+     * but now since we always check for notifications before sending something over, they just 
+     * create a blank object and really it's debatable if we need methods for them. But since
+     * they're here may as well use them. 
 	 */
+	
+	/**
+	 * Creates a SUCCESS response to be sent back to the client.
+	 * 
+	 * @return     A new SUCCESS response
+	 */
+	private ServerResponse createSuccessResponse() {
+		return new ServerResponse(ResponseType.SUCCESS);
+	}
 	
 	/**
 	 * Creates a UNAUTHENTICATED response to be sent back to the client.
