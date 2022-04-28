@@ -322,7 +322,7 @@ public class ClientHandler extends Thread {
 						currResp = createNoActionResponse();
 						continue; //await next message
 					} else if (dbHandler.bookingEntryExists(res, currUser)) { //then check if a booking already exists (no reason to add to waitlist if a booking is already made)
-						//wait list entry already exists, send a BOOKIG_EXISTS back
+						//wait list entry already exists, send a BOOKING_EXISTS back
 						System.out.println(id + " - Join wait list bad, booking for user exists, send booking exists response");
 						currResp = createBookingExistsResponse();
 					} else {
